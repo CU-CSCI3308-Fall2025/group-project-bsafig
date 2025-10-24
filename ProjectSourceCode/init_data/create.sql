@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS reviews (
 CREATE TABLE IF NOT EXISTS friendships (
     user_id INTEGER NOT NULL REFERENCES users(user_id),
     friend_id INTEGER NOT NULL REFERENCES users(user_id),
+    status VARCHAR(20) NOT NULL IN ('pending', 'accepted'),
     PRIMARY KEY (user_id, friend_id)
 );
 
