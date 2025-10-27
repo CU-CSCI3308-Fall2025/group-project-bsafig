@@ -43,3 +43,28 @@ app.engine('hbs', exphbs.engine({
 }));
 app.set('view engine', 'hbs');
 app.set('views', './views');
+
+// Registration page
+app.get('/register', (req, res) => {
+    res.render('pages/register');
+});
+
+// Handle registration form
+app.post('/register', async(req, res) => {
+    try {
+        const { username, email, password } = req.body;
+
+        // Hash password
+        const hash = await bcrypt.hash(password, 10);
+
+        // Insert into database
+        await db.none('INSERT INTO users(username, email, password) VALUES($1, $2, $3)', [username, email, hash]);
+
+        /* redirect to homepage after successful registration
+            res.redirect('/home');
+        */
+    } catch (error) {
+        console.error('Registration error:', error.message);
+        res.status(500).send('Registration error');
+    }
+});
