@@ -43,3 +43,54 @@ app.engine('hbs', exphbs.engine({
 }));
 app.set('view engine', 'hbs');
 app.set('views', './views');
+
+// Login page
+app.get('/login', (req, res) => {
+    res.render('pages/login', { message: null });
+});
+
+// Handle login form
+app.post('/login', async(req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+
+        if (!user) {
+            return res.redirect('/register');
+        }
+
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+            return res.render('pages/login', { message: 'Incorrect username or password.' });
+        }
+
+        req.session.user = user;
+        req.session.save(err => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Error saving session');
+            }
+            /*
+                redirect to homepage whenever completed
+                res.redirect('/home');
+            */
+        });
+
+    } catch (error) {
+        console.error('Login error:', error.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// Authentication middleware
+const auth = (req, res, next) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    next();
+};
+
+// require login for future routes
+app.use(auth);
