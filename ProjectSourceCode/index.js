@@ -61,7 +61,7 @@ app.post('/login', async(req, res) => {
             return res.redirect('/register');
         }
 
-        const match = await bcrypt.compare(password, user.password);
+        const match = await bcrypt.compare(password, user.password_hash);
 
         if (!match) {
             return res.render('pages/login', { message: 'Incorrect username or password.' });
@@ -73,10 +73,7 @@ app.post('/login', async(req, res) => {
                 console.error(err);
                 return res.status(500).send('Error saving session');
             }
-            /*
-                redirect to homepage whenever completed
-                res.redirect('/home');
-            */
+            res.redirect('/home');
         });
 
     } catch (error) {
@@ -84,19 +81,6 @@ app.post('/login', async(req, res) => {
         res.status(500).send('Server error');
     }
 });
-
-// Authentication middleware
-const auth = (req, res, next) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-    next();
-};
-
-// require login for future routes
-app.use(auth);
-
-
 
 // Registration page
 app.get('/register', (req, res) => {
@@ -111,39 +95,44 @@ app.get('/register', (req, res) => {
 app.post('/register', async(req, res) => {
     const { username, email, password } = req.body;
 
-    // basic validation 
     if (!username || !email || !password) {
         return res.render('pages/register', { message: 'All fields are required.' });
     }
 
     try {
-        // checking if user already exists
         const existingUser = await db.oneOrNone(
-            'SELECT user_id FROM users WHERE username = $1 OR email = $2', 
-            '[username, email]'
-        )
+            'SELECT user_id FROM users WHERE username = $1 OR email = $2', [username, email]
+        );
 
         if (existingUser) {
-            return res.render('pages/register', { 
-                message: 'Username or Email already in use. Please choose a different one.' 
+            return res.render('pages/register', {
+                message: 'Username or Email already in use. Please choose a different one.'
             });
         }
 
-        // Hash password
         const hash = await bcrypt.hash(password, 10);
 
-        // Insert into database
-        await db.none('INSERT INTO users(username, email, password) VALUES($1, $2, $3)', [username, email, password_hash]);
+        await db.none(
+            'INSERT INTO users(username, email, password_hash) VALUES($1, $2, $3)', [username, email, hash]
+        );
 
-        // Success - Redirect to login with a success message, prompt to log in 
         res.redirect('/login?message=Registration successful! Please log in.');
-
     } catch (error) {
         console.error('Registration error:', error.message);
         res.status(500).send('Registration error');
     }
 });
 
+// Authentication middleware
+const auth = (req, res, next) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    next();
+};
+
+// require login for future routes
+app.use(auth);
 
 // Logout page
 // GET Logout
@@ -157,3 +146,13 @@ app.get('/logout', (req, res) => {
     });
 });
 
+// Home page
+app.get('/home', (req, res) => {
+    res.render('pages/home', { user: req.session.user });
+});
+
+// Port listener
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
