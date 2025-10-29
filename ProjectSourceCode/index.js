@@ -46,23 +46,44 @@ app.set('views', './views');
 
 // Registration page
 app.get('/register', (req, res) => {
+    // If the user is already logged in, redirect them to the home page
+    if (req.session.user) {
+        return res.redirect('/home');
+    }
     res.render('pages/register');
 });
 
 // Handle registration form
 app.post('/register', async(req, res) => {
+    const { username, email, password } = req.body;
+
+    // basic validation 
+    if (!username || !email || !password) {
+        return res.render('pages/register', { message: 'All fields are required.' });
+    }
+
     try {
-        const { username, email, password } = req.body;
+        // checking if user already exists
+        const existingUser = await db.oneOrNone(
+            'SELECT user_id FROM users WHERE username = $1 OR email = $2', 
+            '[username, email]'
+        )
+
+        if (existingUser) {
+            return res.render('pages/register', { 
+                message: 'Username or Email already in use. Please choose a different one.' 
+            });
+        }
 
         // Hash password
         const hash = await bcrypt.hash(password, 10);
 
         // Insert into database
-        await db.none('INSERT INTO users(username, email, password) VALUES($1, $2, $3)', [username, email, hash]);
+        await db.none('INSERT INTO users(username, email, password) VALUES($1, $2, $3)', [username, email, password_hash]);
 
-        /* redirect to homepage after successful registration
-            res.redirect('/home');
-        */
+        // Success - Redirect to login with a success message, prompt to log in 
+        res.redirect('/login?message=Registration successful! Please log in.');
+
     } catch (error) {
         console.error('Registration error:', error.message);
         res.status(500).send('Registration error');
