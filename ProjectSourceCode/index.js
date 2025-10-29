@@ -44,6 +44,7 @@ app.engine('hbs', exphbs.engine({
 app.set('view engine', 'hbs');
 app.set('views', './views');
 
+
 // Login page
 app.get('/login', (req, res) => {
     res.render('pages/login', { message: null });
@@ -94,3 +95,52 @@ const auth = (req, res, next) => {
 
 // require login for future routes
 app.use(auth);
+
+
+
+// Registration page
+app.get('/register', (req, res) => {
+    // If the user is already logged in, redirect them to the home page
+    if (req.session.user) {
+        return res.redirect('/home');
+    }
+    res.render('pages/register');
+});
+
+// Handle registration form
+app.post('/register', async(req, res) => {
+    const { username, email, password } = req.body;
+
+    // basic validation 
+    if (!username || !email || !password) {
+        return res.render('pages/register', { message: 'All fields are required.' });
+    }
+
+    try {
+        // checking if user already exists
+        const existingUser = await db.oneOrNone(
+            'SELECT user_id FROM users WHERE username = $1 OR email = $2', 
+            '[username, email]'
+        )
+
+        if (existingUser) {
+            return res.render('pages/register', { 
+                message: 'Username or Email already in use. Please choose a different one.' 
+            });
+        }
+
+        // Hash password
+        const hash = await bcrypt.hash(password, 10);
+
+        // Insert into database
+        await db.none('INSERT INTO users(username, email, password) VALUES($1, $2, $3)', [username, email, password_hash]);
+
+        // Success - Redirect to login with a success message, prompt to log in 
+        res.redirect('/login?message=Registration successful! Please log in.');
+
+    } catch (error) {
+        console.error('Registration error:', error.message);
+        res.status(500).send('Registration error');
+    }
+});
+
