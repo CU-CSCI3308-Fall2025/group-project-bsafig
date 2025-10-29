@@ -43,3 +43,15 @@ app.engine('hbs', exphbs.engine({
 }));
 app.set('view engine', 'hbs');
 app.set('views', './views');
+
+
+// GET Logout
+app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).send('Could not log out.');
+        }
+        res.redirect('/login');
+    });
+});
