@@ -1,3 +1,5 @@
+{{> message}}
+
 <div class="container mt-5" style="max-width: 500px;">
   <h2 class="text-center mb-4">Register</h2>
 
@@ -10,6 +12,18 @@
         id="username"
         name="username"
         placeholder="Choose a username"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        name="email"
+        placeholder="Enter your email"
         required
       />
     </div>
