@@ -152,6 +152,72 @@ app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
 });
 
+// Friends page
+app.get('/friends', (req, res) => {
+    res.render('pages/friends', { user: req.session.user });
+});
+
+// Friends page user search API route
+app.get('/search-friends', async(req, res) => {
+    const query = req.query.query;
+    const currentUserId = req.session.user.user_id;
+
+    if (!query || query.trim() === '') {
+        return res.json([]);
+    }
+
+    try {
+        const users = await db.any(
+            `SELECT user_id, username 
+       FROM users 
+       WHERE username ILIKE $1 
+       AND user_id != $2
+       LIMIT 10`, [`%${query}%`, currentUserId]
+        );
+
+        res.json(users);
+    } catch (error) {
+        console.error('Search error:', error.message);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+
+// Friends page send a friend request from search
+app.post('/send-friend-request', async(req, res) => {
+    const currentUserId = req.session.user.user_id;
+    const { friend_id } = req.body;
+
+    if (!friend_id || friend_id === currentUserId) {
+        return res.status(400).json({ message: 'Invalid friend request.' });
+    }
+
+    try {
+        // Check if request already exists (either direction)
+        const existing = await db.oneOrNone(
+            `SELECT * FROM friendships 
+       WHERE (user_id = $1 AND friend_id = $2)
+       OR (user_id = $2 AND friend_id = $1)`, [currentUserId, friend_id]
+        );
+
+        if (existing) {
+            return res.json({ message: 'Friend request already sent or friendship exists.' });
+        }
+
+        // Insert new pending request
+        await db.none(
+            `INSERT INTO friendships (user_id, friend_id, status)
+       VALUES ($1, $2, 'pending')`, [currentUserId, friend_id]
+        );
+
+        res.json({ message: 'Friend request sent!' });
+    } catch (error) {
+        console.error('Friend request error:', error.message);
+        res.status(500).json({ message: 'Server error.' });
+    }
+});
+
+
 // Port listener
 const PORT = process.env.PORT || 3000;
 // Assign the result of app.listen() (the HTTP server object) to a variable.
