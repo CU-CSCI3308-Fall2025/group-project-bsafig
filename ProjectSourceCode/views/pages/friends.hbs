@@ -52,7 +52,9 @@
 
     resultsDiv.innerHTML = users.map(user => `
       <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
-        <div><strong>${user.username}</strong></div>
+        <div>
+          <strong>${user.username}</strong>
+        </div>
         <button class="btn btn-primary btn-sm" onclick="sendRequest(${user.user_id})">Add Friend</button>
       </div>
     `).join('');
