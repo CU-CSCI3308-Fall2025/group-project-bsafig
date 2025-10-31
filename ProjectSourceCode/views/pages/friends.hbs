@@ -1,1 +1,52 @@
-<p>This is the friends page</p>
+<div class="container mt-5" style="max-width: 600px;">
+  <h2 class="text-center mb-4">Find Friends</h2>
+
+  <!-- Search bar -->
+  <form id="searchForm" class="mb-3">
+    <input type="text" id="searchInput" name="query" class="form-control" placeholder="Search for users...">
+  </form>
+
+  {{> message}}
+
+  <!-- Search results -->
+  <div id="results"></div>
+</div>
+
+<script>
+  const form = document.getElementById('searchForm');
+  const input = document.getElementById('searchInput');
+  const resultsDiv = document.getElementById('results');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = input.value.trim();
+    if (!query) return;
+
+    const res = await fetch(`/search-friends?query=${encodeURIComponent(query)}`);
+    const users = await res.json();
+
+    if (users.length === 0) {
+      resultsDiv.innerHTML = '<p>No users found.</p>';
+      return;
+    }
+
+    resultsDiv.innerHTML = users.map(user => `
+      <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+        <div>
+          <strong>${user.username}</strong>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="sendRequest(${user.user_id})">Add Friend</button>
+      </div>
+    `).join('');
+  });
+
+  async function sendRequest(friendId) {
+    const res = await fetch('/send-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friend_id: friendId })
+    });
+    const data = await res.json();
+    alert(data.message);
+  }
+</script>
