@@ -152,6 +152,11 @@ app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
 });
 
+// Friends page
+app.get('/friends', (req, res) => {
+    res.render('pages/friends', { user: req.session.user });
+});
+
 // Port listener
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
