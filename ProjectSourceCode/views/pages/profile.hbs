@@ -1,0 +1,51 @@
+<div class="row">
+  <!-- Left column: Profile info -->
+  <div class="col-md-4 text-center">
+    <!-- Profile picture, need default image -->
+    <div class="mb-3">
+      <img
+        src="{{user.profilePicUrl}}"
+        alt="{{user.username}}'s profile picture"
+        class="img-fluid rounded-circle border"
+        style="width: 150px; height: 150px; object-fit: cover;"
+      />
+    </div>
+
+    <!-- Username -->
+    <h2 class="fw-bold">{{user.username}}</h2>
+
+    <!-- Friend count -->
+    <p class="text-muted">
+      <a href="/friends/{{user.id}}" class="text-decoration-none">
+        {{user.friendCount}} friends
+      </a>
+    </p>
+
+    <!-- Edit profile button (only if viewing own profile) -->
+    {{#if isOwnProfile}}
+    <a href="/profile/edit" class="btn btn-outline-primary btn-sm mt-2">
+      Edit Profile
+    </a>
+    {{/if}}
+  </div>
+
+  <!-- Right column: Posts -->
+  <div class="col-md-8">
+    <h4 class="border-bottom pb-2 mb-3">Posts by {{user.username}}</h4>
+
+    {{#if posts.length}}
+      {{#each posts}}
+        <div class="card mb-3">
+          <div class="card-body">
+            <p class="card-text">{{this.content}}</p>
+            <small class="text-muted">
+              Posted on {{this.createdAt}}
+            </small>
+          </div>
+        </div>
+      {{/each}}
+    {{else}}
+      <p class="text-muted">No posts yet.</p>
+    {{/if}}
+  </div>
+</div>
