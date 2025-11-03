@@ -262,6 +262,23 @@ app.post('/accept-friend-request', async(req, res) => {
     }
 });
 
+// Reject friend request route
+app.post('/reject-friend-request', async(req, res) => {
+    const currentUserId = req.session.user.user_id;
+    const { sender_id } = req.body;
+
+    try {
+        await db.none(
+            `DELETE FROM friendships
+            WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'`, [sender_id, currentUserId]
+        );
+        res.json({ message: 'Friend request rejected.' });
+    } catch (error) {
+        console.error('Error rejecting friend request:', error.message);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // Port listener
 const PORT = process.env.PORT || 3000;
 // Assign the result of app.listen() (the HTTP server object) to a variable.
