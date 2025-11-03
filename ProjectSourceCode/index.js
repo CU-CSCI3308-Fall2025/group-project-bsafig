@@ -30,11 +30,8 @@ const dbConfig = {
     password: process.env.POSTGRES_PASSWORD,
 };
 const db = pgp(dbConfig);
-/*
-    Handlebars setup 
-    IMPORTANT: IF YOU WANT TO USE HANDLEBARS, ADD VIEWS FOLDERS
-    IF NOT, REMOVE THIS SECTION
-*/
+
+// Handlebars setup
 app.engine('hbs', exphbs.engine({
     extname: 'hbs',
     defaultLayout: 'main',
@@ -43,7 +40,6 @@ app.engine('hbs', exphbs.engine({
 }));
 app.set('view engine', 'hbs');
 app.set('views', './views');
-
 
 // Login page
 app.get('/login', (req, res) => {
@@ -84,7 +80,6 @@ app.post('/login', async(req, res) => {
 
 // Registration page
 app.get('/register', (req, res) => {
-    // If the user is already logged in, redirect them to the home page
     if (req.session.user) {
         return res.redirect('/home');
     }
@@ -132,11 +127,10 @@ const auth = (req, res, next) => {
     next();
 };
 
-// require login for future routes
+// Require login for future routes
 app.use(auth);
 
 // Logout page
-// GET Logout
 app.get('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
@@ -152,12 +146,31 @@ app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
 });
 
-// Friends page
-app.get('/friends', (req, res) => {
-    res.render('pages/friends', { user: req.session.user });
+// Friends page (loads pending requests)
+app.get('/friends', async(req, res) => {
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        const pendingRequests = await db.any(
+            `SELECT f.user_id AS sender_id, u.username
+             FROM friendships f
+             JOIN users u ON f.user_id = u.user_id
+             WHERE f.friend_id = $1 AND f.status = 'pending'`, [currentUserId]
+        );
+
+        console.log('Pending requests for user', currentUserId, pendingRequests);
+
+        res.render('pages/friends', {
+            user: req.session.user,
+            pendingRequests
+        });
+    } catch (error) {
+        console.error('Error loading friends page:', error.message);
+        res.status(500).send('Server error');
+    }
 });
 
-// Friends page user search API route
+// Search for users
 app.get('/search-friends', async(req, res) => {
     const query = req.query.query;
     const currentUserId = req.session.user.user_id;
@@ -169,10 +182,10 @@ app.get('/search-friends', async(req, res) => {
     try {
         const users = await db.any(
             `SELECT user_id, username 
-       FROM users 
-       WHERE username ILIKE $1 
-       AND user_id != $2
-       LIMIT 10`, [`%${query}%`, currentUserId]
+             FROM users 
+             WHERE username ILIKE $1 
+             AND user_id != $2
+             LIMIT 10`, [`%${query}%`, currentUserId]
         );
 
         res.json(users);
@@ -182,8 +195,7 @@ app.get('/search-friends', async(req, res) => {
     }
 });
 
-
-// Friends page send a friend request from search
+// Send a friend request
 app.post('/send-friend-request', async(req, res) => {
     const currentUserId = req.session.user.user_id;
     const { friend_id } = req.body;
@@ -193,21 +205,19 @@ app.post('/send-friend-request', async(req, res) => {
     }
 
     try {
-        // Check if request already exists (either direction)
         const existing = await db.oneOrNone(
             `SELECT * FROM friendships 
-       WHERE (user_id = $1 AND friend_id = $2)
-       OR (user_id = $2 AND friend_id = $1)`, [currentUserId, friend_id]
+             WHERE (user_id = $1 AND friend_id = $2)
+             OR (user_id = $2 AND friend_id = $1)`, [currentUserId, friend_id]
         );
 
         if (existing) {
             return res.json({ message: 'Friend request already sent or friendship exists.' });
         }
 
-        // Insert new pending request
         await db.none(
             `INSERT INTO friendships (user_id, friend_id, status)
-       VALUES ($1, $2, 'pending')`, [currentUserId, friend_id]
+             VALUES ($1, $2, 'pending')`, [currentUserId, friend_id]
         );
 
         res.json({ message: 'Friend request sent!' });
@@ -217,6 +227,57 @@ app.post('/send-friend-request', async(req, res) => {
     }
 });
 
+// Accept a friend request
+app.post('/accept-friend-request', async(req, res) => {
+    const currentUserId = req.session.user.user_id;
+    const { sender_id } = req.body;
+
+    if (!sender_id) {
+        return res.status(400).json({ message: 'Invalid request.' });
+    }
+
+    try {
+        await db.none(
+            `UPDATE friendships
+             SET status = 'accepted'
+             WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'`, [sender_id, currentUserId]
+        );
+
+        // Create mutual friendship if not exists
+        const reverse = await db.oneOrNone(
+            `SELECT * FROM friendships WHERE user_id = $1 AND friend_id = $2`, [currentUserId, sender_id]
+        );
+
+        if (!reverse) {
+            await db.none(
+                `INSERT INTO friendships (user_id, friend_id, status)
+                 VALUES ($1, $2, 'accepted')`, [currentUserId, sender_id]
+            );
+        }
+
+        res.json({ message: 'Friend request accepted!' });
+    } catch (error) {
+        console.error('Error accepting friend request:', error.message);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Reject friend request route
+app.post('/reject-friend-request', async(req, res) => {
+    const currentUserId = req.session.user.user_id;
+    const { sender_id } = req.body;
+
+    try {
+        await db.none(
+            `DELETE FROM friendships
+            WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'`, [sender_id, currentUserId]
+        );
+        res.json({ message: 'Friend request rejected.' });
+    } catch (error) {
+        console.error('Error rejecting friend request:', error.message);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 // Port listener
 const PORT = process.env.PORT || 3000;
