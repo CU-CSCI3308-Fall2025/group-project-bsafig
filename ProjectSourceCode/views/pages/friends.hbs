@@ -20,7 +20,10 @@
       {{#each pendingRequests}}
         <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
           <div><strong>{{this.username}}</strong> sent you a friend request.</div>
-          <button class="btn btn-success btn-sm" onclick="acceptRequest({{this.sender_id}})">Accept</button>
+          <div>
+            <button class="btn btn-success btn-sm me-2" onclick="acceptRequest({{this.sender_id}})">Accept</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectRequest({{this.sender_id}})">Reject</button>
+          </div>
         </div>
       {{/each}}
     {{else}}
@@ -30,7 +33,6 @@
 </div>
 
 <script>
-  // --- Search users and send friend requests ---
   const form = document.getElementById('searchForm');
   const input = document.getElementById('searchInput');
   const resultsDiv = document.getElementById('results');
@@ -66,9 +68,19 @@
     alert(data.message);
   }
 
-  // --- Accept pending friend requests ---
   async function acceptRequest(senderId) {
     const res = await fetch('/accept-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender_id: senderId })
+    });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  async function rejectRequest(senderId) {
+    const res = await fetch('/reject-friend-request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sender_id: senderId })
