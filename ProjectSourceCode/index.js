@@ -151,6 +151,14 @@ app.get('/friends', async(req, res) => {
     const currentUserId = req.session.user.user_id;
 
     try {
+
+        const sentRequests = await db.any(
+            `SELECT f.friend_id AS receiver_id, u.username
+             FROM friendships f
+             JOIN users u ON f.friend_id = u.user_id
+             WHERE f.user_id = $1 AND f.status = 'pending'`, [currentUserId]
+        );
+
         const pendingRequests = await db.any(
             `SELECT f.user_id AS sender_id, u.username
              FROM friendships f
@@ -158,10 +166,12 @@ app.get('/friends', async(req, res) => {
              WHERE f.friend_id = $1 AND f.status = 'pending'`, [currentUserId]
         );
 
+        console.log('Sent requests for user', currentUserId, sentRequests);
         console.log('Pending requests for user', currentUserId, pendingRequests);
 
         res.render('pages/friends', {
             user: req.session.user,
+            sentRequests,
             pendingRequests
         });
     } catch (error) {
@@ -279,66 +289,22 @@ app.post('/reject-friend-request', async(req, res) => {
     }
 });
 
-// Friends page user search API route
-app.get('/search-friends', async(req, res) => {
-    const query = req.query.query;
+// Cancel sent friend request route
+app.post('/cancel-friend-request', async(req, res) => {
     const currentUserId = req.session.user.user_id;
-
-    if (!query || query.trim() === '') {
-        return res.json([]);
-    }
+    const { receiver_id } = req.body;
+    if (!receiver_id) return res.status(400).json({ message: 'Invalid request.' });
 
     try {
-        const users = await db.any(
-            `SELECT user_id, username 
-       FROM users 
-       WHERE username ILIKE $1 
-       AND user_id != $2
-       LIMIT 10`, [`%${query}%`, currentUserId]
-        );
-
-        res.json(users);
+        await db.none(`
+      DELETE FROM friendships
+      WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'`, [currentUserId, receiver_id]);
+        res.json({ message: 'Friend request canceled.' });
     } catch (error) {
-        console.error('Search error:', error.message);
-        res.status(500).json({ error: 'Server error' });
+        console.error('Error canceling friend request:', error.message);
+        res.status(500).json({ message: 'Server error' });
     }
 });
-
-
-// Friends page send a friend request from search
-app.post('/send-friend-request', async(req, res) => {
-    const currentUserId = req.session.user.user_id;
-    const { friend_id } = req.body;
-
-    if (!friend_id || friend_id === currentUserId) {
-        return res.status(400).json({ message: 'Invalid friend request.' });
-    }
-
-    try {
-        // Check if request already exists (either direction)
-        const existing = await db.oneOrNone(
-            `SELECT * FROM friendships 
-       WHERE (user_id = $1 AND friend_id = $2)
-       OR (user_id = $2 AND friend_id = $1)`, [currentUserId, friend_id]
-        );
-
-        if (existing) {
-            return res.json({ message: 'Friend request already sent or friendship exists.' });
-        }
-
-        // Insert new pending request
-        await db.none(
-            `INSERT INTO friendships (user_id, friend_id, status)
-       VALUES ($1, $2, 'pending')`, [currentUserId, friend_id]
-        );
-
-        res.json({ message: 'Friend request sent!' });
-    } catch (error) {
-        console.error('Friend request error:', error.message);
-        res.status(500).json({ message: 'Server error.' });
-    }
-});
-
 
 // Port listener
 const PORT = process.env.PORT || 3000;
