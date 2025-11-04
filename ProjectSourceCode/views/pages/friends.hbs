@@ -13,8 +13,23 @@
 
   <hr class="my-4">
 
-  <!-- Pending friend requests section -->
-  <h4 class="mb-3 text-center">Pending Friend Requests</h4>
+  <!-- Sent friend requests -->
+  <h4 class="mb-3 text-center">Sent Friend Requests</h4>
+  <div id="sentRequests">
+    {{#if sentRequests.length}}
+      {{#each sentRequests}}
+        <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+          <div><strong>{{this.username}}</strong></div>
+          <button class="btn btn-warning btn-sm" onclick="cancelRequest({{this.receiver_id}})">Cancel Request</button>
+        </div>
+      {{/each}}
+    {{else}}
+      <p class="text-center text-muted">No sent requests.</p>
+    {{/if}}
+  </div>
+
+  <!-- Pending friend requests -->
+  <h4 class="mb-3 text-center mt-4">Pending Friend Requests</h4>
   <div id="pendingRequests">
     {{#if pendingRequests.length}}
       {{#each pendingRequests}}
@@ -45,7 +60,7 @@
     const res = await fetch(`/search-friends?query=${encodeURIComponent(query)}`);
     const users = await res.json();
 
-    if (users.length === 0) {
+    if (!users || users.length === 0) {
       resultsDiv.innerHTML = '<p>No users found.</p>';
       return;
     }
@@ -66,6 +81,7 @@
     });
     const data = await res.json();
     alert(data.message);
+    location.reload();
   }
 
   async function acceptRequest(senderId) {
@@ -84,6 +100,17 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sender_id: senderId })
+    });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  async function cancelRequest(receiverId) {
+    const res = await fetch('/cancel-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ receiver_id: receiverId })
     });
     const data = await res.json();
     alert(data.message);
