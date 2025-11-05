@@ -45,6 +45,9 @@ app.set('view engine', 'hbs');
 app.set('views', './views');
 
 
+/* REGISTRATION ENDPOINTS */
+
+
 // Login page
 app.get('/login', (req, res) => {
     res.render('pages/login', { message: null });
@@ -150,6 +153,49 @@ app.get('/logout', (req, res) => {
 // Home page
 app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
+});
+
+/* PROFILE ENDPOINTS */
+
+// GET Profile View (viewing a specific user's profile) 
+app.get('/profile/:username', async (req, res) => {
+    const targetUsername = req.params.username;
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        // Fetch the target user's details
+        const targetUser = await db.oneOrNone('SELECT user_id, username, profile_pic_url FROM users WHERE username = $1', [targetUsername]);
+
+        if (!targetUser) {
+            return res.status(404).render('pages/error', { message: 'User not found.' });
+        }
+
+        // Check if this is the authenticated user's own profile
+        const isOwnProfile = targetUser.user_id === currentUserId;
+
+        // TO DO: Fetch friend count (hardcoded for now)
+        const friendCount = 0; 
+
+        // TO DO: Fetch posts (hardcoded empty for now)
+        const posts = [];
+
+        // Render the page
+        res.render('pages/profile', {
+            user: {
+                id: targetUser.user_id,
+                username: targetUser.username,
+                profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
+                friendCount: friendCount
+            },
+            posts: posts,
+            isOwnProfile: isOwnProfile,
+            title: `${targetUser.username}'s Profile`
+        });
+
+    } catch (error) {
+        console.error('Profile view error:', error.message);
+        res.status(500).send('Error loading profile.');
+    }
 });
 
 // Port listener
