@@ -151,6 +151,14 @@ app.get('/friends', async(req, res) => {
     const currentUserId = req.session.user.user_id;
 
     try {
+
+        const sentRequests = await db.any(
+            `SELECT f.friend_id AS receiver_id, u.username
+             FROM friendships f
+             JOIN users u ON f.friend_id = u.user_id
+             WHERE f.user_id = $1 AND f.status = 'pending'`, [currentUserId]
+        );
+
         const pendingRequests = await db.any(
             `SELECT f.user_id AS sender_id, u.username
              FROM friendships f
@@ -158,10 +166,12 @@ app.get('/friends', async(req, res) => {
              WHERE f.friend_id = $1 AND f.status = 'pending'`, [currentUserId]
         );
 
+        console.log('Sent requests for user', currentUserId, sentRequests);
         console.log('Pending requests for user', currentUserId, pendingRequests);
 
         res.render('pages/friends', {
             user: req.session.user,
+            sentRequests,
             pendingRequests
         });
     } catch (error) {
@@ -275,6 +285,23 @@ app.post('/reject-friend-request', async(req, res) => {
         res.json({ message: 'Friend request rejected.' });
     } catch (error) {
         console.error('Error rejecting friend request:', error.message);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Cancel sent friend request route
+app.post('/cancel-friend-request', async(req, res) => {
+    const currentUserId = req.session.user.user_id;
+    const { receiver_id } = req.body;
+    if (!receiver_id) return res.status(400).json({ message: 'Invalid request.' });
+
+    try {
+        await db.none(`
+      DELETE FROM friendships
+      WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'`, [currentUserId, receiver_id]);
+        res.json({ message: 'Friend request canceled.' });
+    } catch (error) {
+        console.error('Error canceling friend request:', error.message);
         res.status(500).json({ message: 'Server error' });
     }
 });
