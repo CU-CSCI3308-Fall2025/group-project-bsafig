@@ -152,11 +152,7 @@ app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
 });
 
-// Port listener
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+
 
 /* SETTINGS ENDPOINTS */
 
@@ -284,4 +280,10 @@ app.post('/profile/settings/updatePicture', async (req, res) => {
             message: 'An error occurred while updating your profile picture.'
         });
     }
+});
+
+// Port listener
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
