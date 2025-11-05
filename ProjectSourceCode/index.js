@@ -157,3 +157,22 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+app.get('/profile', async(req, res) => {
+
+    try {
+        let user = req.session.user
+        const num_friends = await db.one(
+            `SELECT COUNT(*) AS friend_count 
+            FROM friendships 
+            WHERE status = 'accepted' AND 
+            (user_id = $1 OR  friend_id = $1)`, [req.session.user.user_id]
+        );    
+        user.friendCount = num_friends.friend_count;
+        let posts = [];
+        console.log(user);
+        return res.render('pages/profile', {user, posts});
+    } catch (err) {
+        return res.status(500).send('Could not get friends.')
+    }
+});
