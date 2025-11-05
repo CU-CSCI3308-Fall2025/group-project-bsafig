@@ -164,8 +164,7 @@ app.get('/profile/:username', async (req, res) => {
 
     try {
         // Fetch the target user's details
-        const targetUser = await db.oneOrNone('SELECT user_id, username, profile_pic_url FROM users WHERE username = $1', [targetUsername]);
-
+        const targetUser = await db.oneOrNone('SELECT user_id, username, profile_picture_url FROM users WHERE username = $1', [targetUsername]);
         if (!targetUser) {
             return res.status(404).render('pages/error', { message: 'User not found.' });
         }
@@ -174,17 +173,29 @@ app.get('/profile/:username', async (req, res) => {
         const isOwnProfile = targetUser.user_id === currentUserId;
 
         // TO DO: Fetch friend count (hardcoded for now)
-        const friendCount = 0; 
+        const friends = await db.one(
+                `SELECT COUNT(*) AS friend_count 
+                FROM friendships 
+                WHERE status = 'accepted' AND 
+                (user_id = $1 OR  friend_id = $1)`, [req.session.user.user_id]
+            );  
+        friendCount = friends.friend_count
 
         // TO DO: Fetch posts (hardcoded empty for now)
-        const posts = [];
+        const posts = await db.any(
+                `SELECT content, created_at AS "createdAt"
+                FROM posts
+                WHERE user_id = $1
+                ORDER BY created_at DESC`, [req.session.user.user_id]
+            );
 
         // Render the page
         res.render('pages/profile', {
             user: {
                 id: targetUser.user_id,
                 username: targetUser.username,
-                profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
+                // profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
+                profilePicUrl: targetUser.profile_pic_url,
                 friendCount: friendCount
             },
             posts: posts,
@@ -204,31 +215,31 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-app.get('/profile', async(req, res) => {
+// app.get('/profile', async(req, res) => {
 
-    try {
-        let user = req.session.user
+//     try {
+//         let user = req.session.user
 
-        const result = await db.task(async t => {
-            const num_friends = await t.one(
-                `SELECT COUNT(*) AS friend_count 
-                FROM friendships 
-                WHERE status = 'accepted' AND 
-                (user_id = $1 OR  friend_id = $1)`, [req.session.user.user_id]
-            );    
-            const posts = await t.any(
-                `SELECT content, created_at AS "createdAt"
-                FROM posts
-                WHERE user_id = $1
-                ORDER BY created_at DESC`, [req.session.user.user_id]
-            );
-            return {num_friends, posts}
+//         const result = await db.task(async t => {
+//             const num_friends = await t.one(
+//                 `SELECT COUNT(*) AS friend_count 
+//                 FROM friendships 
+//                 WHERE status = 'accepted' AND 
+//                 (user_id = $1 OR  friend_id = $1)`, [req.session.user.user_id]
+//             );    
+//             const posts = await t.any(
+//                 `SELECT content, created_at AS "createdAt"
+//                 FROM posts
+//                 WHERE user_id = $1
+//                 ORDER BY created_at DESC`, [req.session.user.user_id]
+//             );
+//             return {num_friends, posts}
             
-        });
-        user.friendCount = result.num_friends.friend_count;
-        const posts = result.posts
-        return res.render('pages/profile', {user, posts});
-    } catch (err) {
-        return res.status(500).send('Could not get friends.')
-    }
-});
+//         });
+//         user.friendCount = result.num_friends.friend_count;
+//         const posts = result.posts
+//         return res.render('pages/profile', {user, posts});
+//     } catch (err) {
+//         return res.status(500).send('Could not get friends.')
+//     }
+// });
