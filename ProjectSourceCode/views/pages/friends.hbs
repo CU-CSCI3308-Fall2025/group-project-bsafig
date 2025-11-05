@@ -1,0 +1,45 @@
+{{> message}}
+
+<div class="container mt-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0">Your Friends</h2>
+    <a class="btn btn-outline-secondary" href="/home">Back to Home</a>
+  </div>
+
+  {{#if friends.length}}
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th style="width:60px;">Avatar</th>
+            <th>Username</th>
+            <th style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each friends}}
+            <tr>
+              <td>
+                {{#if this.profile_picture_url}}
+                  <img src="{{this.profile_picture_url}}" alt="{{this.username}} avatar" class="rounded-circle" style="width:48px;height:48px;object-fit:cover;">
+                {{else}}
+                  <img src="/images/default-profile.png" alt="default avatar" class="rounded-circle" style="width:48px;height:48px;object-fit:cover;">
+                {{/if}}
+              </td>
+              <td class="fw-medium">{{this.username}}</td>
+              <td>
+                <form action="/friends/delete/{{this.user_id}}" method="POST" onsubmit="return confirm('Remove {{this.username}} from your friends?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  {{else}}
+    <div class="alert alert-info">
+      You don’t have any accepted friends yet.
+    </div>
+  {{/if}}
+</div>
