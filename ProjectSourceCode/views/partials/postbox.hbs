@@ -1,0 +1,21 @@
+<div class="fixed-bottom bg-light p-3 border-top">
+  <form id="postForm" action="/post" method="POST">
+    <h5>Create a Review</h5>
+    <div class="mb-3">
+      <label for="musicType" class="form-label">Add Music</label>
+      <input type="text" id="musicType" name="name" class="form-control" placeholder="Type the name of a song, album, or artist" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="rating" class="form-label">Rating (out of 10)</label>
+      <input type="number" id="rating" name="rating" class="form-control" min="0" max="10" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="content" class="form-label">Your Review</label>
+      <textarea id="content" name="content" class="form-control" maxlength="1000" rows="4" required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Post Review</button>
+  </form>
+</div>
