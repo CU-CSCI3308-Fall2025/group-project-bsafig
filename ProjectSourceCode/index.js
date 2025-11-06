@@ -215,7 +215,7 @@ app.post('/send-friend-request', async(req, res) => {
     }
 
     try {
-        const existing = await db.oneOrNone(
+        const existing = await db.any(
             `SELECT * FROM friendships 
              WHERE (user_id = $1 AND friend_id = $2)
              OR (user_id = $2 AND friend_id = $1)`, [currentUserId, friend_id]
