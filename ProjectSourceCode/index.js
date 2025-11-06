@@ -284,6 +284,9 @@ app.post('/profile/settings/updatePicture', async (req, res) => {
             user: req.session.user,
             message: 'An error occurred while updating your profile picture.'
         });
+    }
+});
+
 
 /* PROFILE ENDPOINTS */
 
@@ -342,21 +345,6 @@ app.get('/profile/:username', async (req, res) => {
 // Port listener
 const PORT = process.env.PORT || 3000;
 
-app.get('/test-profile', (req, res) => {
-  res.render('pages/profile', {
-    user: {
-      id: 1,
-      username: 'testuser',
-      friendCount: 5
-    },
-    posts: [
-      { content: 'Hello world!', createdAt: 'Nov 5, 2025' },
-      { content: 'Just testing my profile page.', createdAt: 'Nov 4, 2025' }
-    ],
-    isOwnProfile: true,
-    title: "testuser's Profile"
-  });
-});
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
