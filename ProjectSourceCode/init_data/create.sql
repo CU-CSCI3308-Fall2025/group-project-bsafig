@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS friendships (
     PRIMARY KEY (user_id, friend_id)
 );
 
+
+
 -- COMMENTS TABLE TBA --
 /*
 CREATE TABLE IF NOT EXISTS comments (

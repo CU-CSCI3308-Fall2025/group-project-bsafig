@@ -3,12 +3,12 @@
   <div class="col-md-4 text-center">
     <!-- Profile picture, need default image -->
     <div class="mb-3">
-      <img
-        src="{{user.profilePicUrl}}"
-        alt="{{user.username}}'s profile picture"
-        class="img-fluid rounded-circle border"
-        style="width: 150px; height: 150px; object-fit: cover;"
-      />
+        <img
+            src="{{#if user.profilePicUrl}}{{user.profilePicUrl}}{{else}}/images/default-profile.png{{/if}}"
+            alt="{{user.username}}'s profile picture"
+            class="img-fluid rounded-circle border"
+            style="width: 150px; height: 150px; object-fit: cover;"
+        />
     </div>
 
     <!-- Username -->
@@ -21,10 +21,10 @@
       </a>
     </p>
 
-    <!-- Settings button (only if viewing own profile) --> 
+    <!-- Edit profile button (only if viewing own profile) --> 
     {{#if isOwnProfile}}
-    <a href="/profile/settings" class="btn btn-outline-primary btn-sm mt-2">
-      Profile Settings
+    <a href="/settings" class="btn btn-outline-primary btn-sm mt-2">
+      Settings
     </a>
     {{/if}}
   </div>

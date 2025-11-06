@@ -13,6 +13,9 @@ const app = express();
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.static('public'));
+
+const DEFAULT_PROFILE_PIC = '/images/default-profile.png';
 
 // Session setup
 app.use(session({
@@ -43,6 +46,9 @@ app.engine('hbs', exphbs.engine({
 }));
 app.set('view engine', 'hbs');
 app.set('views', './views');
+
+
+/* REGISTRATION ENDPOINTS */
 
 
 // Login page
@@ -151,7 +157,6 @@ app.get('/logout', (req, res) => {
 app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
 });
-
 
 
 /* SETTINGS ENDPOINTS */
@@ -279,11 +284,81 @@ app.post('/profile/settings/updatePicture', async (req, res) => {
             user: req.session.user,
             message: 'An error occurred while updating your profile picture.'
         });
+
+/* PROFILE ENDPOINTS */
+
+// GET Profile View (viewing a specific user's profile) 
+app.get('/profile/:username', async (req, res) => {
+    const targetUsername = req.params.username;
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        // Fetch the target user's details
+        const targetUser = await db.oneOrNone('SELECT user_id, username, profile_picture_url FROM users WHERE username = $1', [targetUsername]);
+        if (!targetUser) {
+            return res.status(404).render('pages/error', { message: 'User not found.' });
+        }
+
+        // Check if this is the authenticated user's own profile
+        const isOwnProfile = targetUser.user_id === currentUserId;
+
+        // Fetch friend count 
+        const friends = await db.one(
+                `SELECT COUNT(*) AS friend_count 
+                FROM friendships 
+                WHERE status = 'accepted' AND 
+                (user_id = $1)`, [req.session.user.user_id]
+            );  
+        friendCount = friends.friend_count
+
+       // Fetch posts 
+        const posts = await db.any(
+                `SELECT content, created_at AS "createdAt"
+                FROM reviews
+                WHERE user_id = $1
+                ORDER BY created_at DESC`, [req.session.user.user_id]
+            );
+
+        // Render the page
+        res.render('pages/profile', {
+            user: {
+                id: targetUser.user_id,
+                username: targetUser.username,
+                // profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
+                profilePicUrl: targetUser.profile_pic_url,
+                friendCount: friendCount
+            },
+            posts: posts,
+            isOwnProfile: isOwnProfile,
+            title: `${targetUser.username}'s Profile`
+        });
+
+    } catch (error) {
+        console.error('Profile view error:', error.message);
+        res.status(500).send('Error loading profile.');
     }
 });
 
 // Port listener
 const PORT = process.env.PORT || 3000;
+
+app.get('/test-profile', (req, res) => {
+  res.render('pages/profile', {
+    user: {
+      id: 1,
+      username: 'testuser',
+      friendCount: 5
+    },
+    posts: [
+      { content: 'Hello world!', createdAt: 'Nov 5, 2025' },
+      { content: 'Just testing my profile page.', createdAt: 'Nov 4, 2025' }
+    ],
+    isOwnProfile: true,
+    title: "testuser's Profile"
+  });
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
