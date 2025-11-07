@@ -158,7 +158,6 @@ app.get('/home', (req, res) => {
     res.render('pages/home', { user: req.session.user });
 });
 
-
 /* SETTINGS ENDPOINTS */
 
 // GET Settings View - authenticated user can edit their settings 
@@ -353,6 +352,21 @@ app.get('/postbox', (req, res) => {
 // app.listen(PORT, () => {
 //     console.log(`Server running on port ${PORT}`);
 // });
+
+app.post('/post-review', async(req, res) => {
+    const { name, rating, content } = req.body;
+    const userId = req.session.user.user_id;
+    try {
+        await db.none(
+            'INSERT INTO reviews(user_id, music_name, rating, content) VALUES($1, $2, $3, $4)', [userId, name, rating, content]
+        );
+        res.render('pages/home', { message: 'Review posted!' });
+    } catch (error) {
+        console.error('Error posting review:', error.message);
+        res.render('pages/home', { message: error.message });
+        res.status(500).send('Error posting review');
+    }
+});
 
 // Port listener
 const PORT = process.env.PORT || 3000;

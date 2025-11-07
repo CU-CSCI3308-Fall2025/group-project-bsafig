@@ -6,6 +6,9 @@
     Do not include specific values for any serial keys, they auto-increment
     Do not include specific values for any timestamp fields, they default to the current timestamp
     Profile picure url is NULL by default
+
+    To access the database via psql, use the following command:
+    docker compose exec db psql -U postgres -d users_db
 */
 
 CREATE TABLE IF NOT EXISTS users (
@@ -20,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS reviews (
     review_id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(user_id),
+    music_name VARCHAR(255) NOT NULL,
     rating INTEGER NOT NULL CHECK (rating >= 0 AND rating <= 10),
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
