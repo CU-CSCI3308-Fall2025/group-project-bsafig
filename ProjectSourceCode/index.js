@@ -294,6 +294,56 @@ app.post('/cancel-friend-request', async(req, res) => {
     }
 });
 
+
+// Route: /get-friends
+// Returns all accepted friends + each friend's total friend count
+app.get('/get-friends', async(req, res) => {
+    const uid = req.session.user.user_id;
+
+    const friends = await db.any(`
+    SELECT u.user_id, u.username,
+           (
+             SELECT COUNT(*)
+             FROM friendships f2
+             WHERE (f2.user_id = u.user_id OR f2.friend_id = u.user_id)
+               AND f2.status = 'accepted'
+           ) AS friend_count
+    FROM friendships f
+    JOIN users u
+      ON u.user_id = CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END
+    WHERE (f.user_id = $1 OR f.friend_id = $1)
+      AND f.status = 'accepted'
+    ORDER BY u.username;
+  `, [uid]);
+
+    res.json(friends);
+});
+
+// Route: /unfriend
+// Deletes an accepted friendship between the logged-in user and the given friend_id
+app.post('/unfriend', async(req, res) => {
+    // current user and the friend to remove
+    const uid = req.session.user.user_id;
+    const { friendId } = req.body;
+
+    // Remove the friendship row regardless of direction
+    await db.none(`
+    DELETE FROM friendships
+    WHERE status = 'accepted'
+      AND (
+        (user_id = $1 AND friend_id = $2) OR
+        (user_id = $2 AND friend_id = $1)
+      )
+  `, [uid, friendId]);
+
+    res.json({ ok: true });
+});
+
+
+
+
+
+
 // Port listener
 const PORT = process.env.PORT || 3000;
 // Assign the result of app.listen() (the HTTP server object) to a variable.
