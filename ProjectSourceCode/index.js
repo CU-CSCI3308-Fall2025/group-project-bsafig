@@ -13,6 +13,9 @@ const app = express();
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(express.static('public'));
+
+const DEFAULT_PROFILE_PIC = '/images/default-profile.png';
 
 // Session setup
 app.use(session({
@@ -343,6 +346,189 @@ app.post('/unfriend', async(req, res) => {
 
 
 
+
+/* SETTINGS ENDPOINTS */
+
+// GET Settings View - authenticated user can edit their settings 
+// TO DO: link to a button in profile.hbs
+app.get('/profile/settings', (req, res) => { 
+    res.render('pages/settings', { 
+        user: req.session.user,
+        message: null 
+    });
+});
+
+// create 3 POST requests for 3 separate form changes
+// POST Update Username
+app.post('/profile/settings/updateUsername', async (req, res) => {
+    const { newUsername } = req.body;
+    const currentUserId = req.session.user.user_id;
+
+    if (!newUsername || newUsername.trim() === '') {
+        return res.render('pages/settings', { 
+            user: req.session.user,
+            message: 'Username cannot be empty.' 
+        });
+    }
+
+    try {
+        // is username already taken?
+        const existingUser = await db.oneOrNone('SELECT user_id FROM users WHERE username = $1 AND user_id != $2', [newUsername, currentUserId]);
+
+        if (existingUser) {
+            return res.render('pages/settings', {
+                user: req.session.user,
+                message: 'This username is already taken. Please choose another one.'
+            });
+        }
+
+        await db.none('UPDATE users SET username = $1 WHERE user_id = $2', [newUsername, currentUserId]);
+
+        // update the session with the new user 
+        req.session.user.username = newUsername;
+        
+        // reloads page for the user 
+        return res.render('pages/settings', {
+            user: req.session.user,
+            message: 'Username successfully updated!'
+        });
+
+    } catch (error) {
+        console.error('Update username error:', error.message);
+        return res.status(500).render('pages/settings', {
+            user: req.session.user,
+            message: 'An error occurred while updating your username.'
+        });
+    }
+});
+
+// POST Update Password
+app.post('/profile/settings/updatePassword', async (req, res) => {
+    const { newPassword, confirmPassword } = req.body;
+    const currentUserId = req.session.user.user_id;
+
+    if (!newPassword || newPassword !== confirmPassword) {
+        return res.render('pages/settings', {
+            user: req.session.user,
+            message: 'Passwords do not match or field is empty.'
+        });
+    }
+
+    try {
+        // hash the new password
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        // update the password hash in the database
+        await db.none('UPDATE users SET password_hash = $1 WHERE user_id = $2', [newPasswordHash, currentUserId]);
+
+        // [consider optional if wanted], destroy and redirect to login to reauthenticate
+        req.session.destroy(err => {
+            if (err) {
+                console.error('Logout error after password change:', err);
+                return res.status(500).send('Password updated, but could not log out.');
+            }
+            
+            res.render('pages/login', { message: 'Password successfully updated! Please log in again.' });
+        });
+
+    } catch (error) {
+        console.error('Update password error:', error.message);
+        // if an error occurs before destroy, render the settings page with an error
+        if (!res.headersSent) {
+            return res.status(500).render('pages/settings', {
+                user: req.session.user,
+                message: 'An error occurred while updating your password.'
+            });
+        }
+    }
+});
+
+// POST Update Profile Picture URL
+app.post('/profile/settings/updatePicture', async (req, res) => {
+    const { profilePicUrl } = req.body;
+    const currentUserId = req.session.user.user_id;
+    // TO DO: a DEFAULT_PROFILE_PIC express object must be defined 
+    const DEFAULT_PROFILE_PIC = 'TO DO'; 
+
+    // use provided URL. if empty, use NULL which should revert to default
+    const newProfilePicUrl = (profilePicUrl && profilePicUrl.trim() !== '') ? profilePicUrl : null;
+
+    try {
+        // update the profile_picture_url in the database
+        await db.none('UPDATE users SET profile_picture_url = $1 WHERE user_id = $2', [newProfilePicUrl, currentUserId]);
+
+        // update the session
+        req.session.user.profile_pic_url = newProfilePicUrl;
+
+        // refresh the page with a success message
+        return res.render('pages/settings', {
+            user: req.session.user,
+            message: 'Profile picture successfully updated!'
+        });
+
+    } catch (error) {
+        console.error('Update profile picture error:', error.message);
+        return res.status(500).render('pages/settings', {
+            user: req.session.user,
+            message: 'An error occurred while updating your profile picture.'
+        });
+    }
+});
+
+
+/* PROFILE ENDPOINTS */
+
+// GET Profile View (viewing a specific user's profile) 
+app.get('/profile/:username', async (req, res) => {
+    const targetUsername = req.params.username;
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        // Fetch the target user's details
+        const targetUser = await db.oneOrNone('SELECT user_id, username, profile_picture_url FROM users WHERE username = $1', [targetUsername]);
+        if (!targetUser) {
+            return res.status(404).render('pages/error', { message: 'User not found.' });
+        }
+
+        // Check if this is the authenticated user's own profile
+        const isOwnProfile = targetUser.user_id === currentUserId;
+
+        // Fetch friend count 
+        const friends = await db.one(
+                `SELECT COUNT(*) AS friend_count 
+                FROM friendships 
+                WHERE status = 'accepted' AND 
+                (user_id = $1)`, [req.session.user.user_id]
+            );  
+        friendCount = friends.friend_count
+
+       // Fetch posts 
+        const posts = await db.any(
+                `SELECT content, created_at AS "createdAt"
+                FROM reviews
+                WHERE user_id = $1
+                ORDER BY created_at DESC`, [req.session.user.user_id]
+            );
+
+        // Render the page
+        res.render('pages/profile', {
+            user: {
+                id: targetUser.user_id,
+                username: targetUser.username,
+                // profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
+                profilePicUrl: targetUser.profile_pic_url,
+                friendCount: friendCount
+            },
+            posts: posts,
+            isOwnProfile: isOwnProfile,
+            title: `${targetUser.username}'s Profile`
+        });
+
+    } catch (error) {
+        console.error('Profile view error:', error.message);
+        res.status(500).send('Error loading profile.');
+    }
+});
 
 // Port listener
 const PORT = process.env.PORT || 3000;
