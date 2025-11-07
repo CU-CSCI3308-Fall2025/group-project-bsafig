@@ -47,11 +47,27 @@
   </div>
 </div>
 
+
+  <!-- Friends Section -->
+  <!-- Displays a list of all accepted friends for the logged-in user.
+       If there are no friends, a message is shown instead. -->
+  <h4 class="mb-3 text-center mt-4">Friends</h4>
+
+  <!-- This container will dynamically display the friend list or a message -->
+  <div id="friendsList">
+    <p class="text-center text-muted">Loading friends...</p>
+  </div>
+
+
 <script>
+  // Load the list of friends when the page finishes loading
+  document.addEventListener('DOMContentLoaded', loadFriends);
+
+
   const form = document.getElementById('searchForm');
   const input = document.getElementById('searchInput');
   const resultsDiv = document.getElementById('results');
-
+  
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const query = input.value.trim();
@@ -116,4 +132,46 @@
     alert(data.message);
     location.reload();
   }
+
+  // Fetch and render all accepted friends
+  async function loadFriends() {
+    const res = await fetch('/get-friends');
+    const friends = await res.json();
+
+    const container = document.getElementById('friendsList');
+
+    // If no friends exist, display a message
+    if (!friends.length) {
+      container.innerHTML = '<p class="text-center text-muted">You do not have any friends yet.</p>';
+      return;
+    }
+
+    // Otherwise, create a Bootstrap card for each friend
+    // Each card shows the friend’s username, their total number of friends,
+    // and an "Unfriend" button.
+    container.innerHTML = friends.map(f => `
+      <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+        <div>
+          <strong>${f.username}</strong><br>
+          <small class="text-muted">
+            ${f.friend_count} friend${Number(f.friend_count) !== 1 ? 's' : ''}
+          </small>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="unfriend(${f.user_id})">Unfriend</button>
+      </div>
+    `).join('');
+  }
+
+  // Remove an existing friend and refresh the list
+  async function unfriend(friendId) {
+    await fetch('/unfriend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId })
+    });
+
+    // Reload the list after deletion
+    loadFriends();
+  }
+
 </script>
