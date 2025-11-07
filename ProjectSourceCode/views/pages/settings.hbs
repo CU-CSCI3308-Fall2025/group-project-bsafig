@@ -1,0 +1,72 @@
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1 class="mb-4">User Settings</h1>
+
+            {{#if message}}
+            <div class="alert alert-info" role="alert">
+                {{message}}
+            </div>
+            {{/if}}
+
+
+        <!-- 
+            place three separate forms here,
+            each pointing to the correct POST endpoint:
+            1. /profile/settings/username
+            2. /profile/settings/password
+            3. /profile/settings/picture
+        -->
+
+        <!-- Change Username Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Username</h5>
+                <form action="/profile/settings/updateUsername" method="POST">
+                    <div class="mb-3">
+                        <label for="newUsername" class="form-label">New Username</label>
+                        <input type="text" class="form-control" id="newUsername" name="newUsername" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Username</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Password</h5>
+                <form action="/profile/settings/updatePassword" method="POST">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Profile Picture Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Profile Picture</h5>
+                <form action="/profile/settings/updatePicture" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="profilePicture" class="form-label">New Profile Picture</label>
+                        <input type="file" class="form-control" id="profilePicture" name="profilePicture" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile Picture</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
