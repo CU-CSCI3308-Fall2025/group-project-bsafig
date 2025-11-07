@@ -1,0 +1,16 @@
+11/05/25 Meeting 2 Notes
+
+Class Logistics:
+- The 3 commits on 3 separate days of the week will be enforced next week
+- Make sure to merge feature branches into a main branch by meeting time ideally, just to showcase more 
+- We demoed the basic registration page of the app during TA meeting
+
+Work:
+- Collectively, we have added our user stories, story points, and epics to the GitHub project board
+- We will continue to work on creating the full skeleton of our app, with a focus on finishing off and merging the profile + settings page, the friend system, and then approaching the post system and external API work. 
+
+- James worked on endpoints related to the profile and settings page (updating usernames, passwords, profile picture)
+- Ben worked on endpoints related to the friends page, including a search friends bar, the friend request system, and displaying sent friend requests
+- George worked on adding a skeleton for the friends handlebar along with working on user stories related to the friends page like displaying a list of friends and deleting friends
+- Cara worked on the navbar, profile frontend with a default image, and linking frontend endpoints to the backend for profile and settings, 
+- Mason worked on the SQL queries for the friend count and posts, simplified logic for some of the profile endpoints, along with modifications to the profile frontend, and bugfixes for the profile display 

@@ -20,6 +20,6 @@ services:
       - '3000:3000'
     volumes:
       - ./:/home/node/app
-    command: 'npm start'
+    command: 'npm start' # change the command to `npm run testandrun` to run mocha
 volumes:
   pgdata:

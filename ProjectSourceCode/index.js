@@ -342,11 +342,18 @@ app.get('/profile/:username', async (req, res) => {
     }
 });
 
+// // Port listener
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//     console.log(`Server running on port ${PORT}`);
+// });
+
 // Port listener
 const PORT = process.env.PORT || 3000;
-
-
-app.listen(PORT, () => {
+// Assign the result of app.listen() (the HTTP server object) to a variable.
+const server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
+// EXPORT THE SERVER INSTANCE
+module.exports = server;
