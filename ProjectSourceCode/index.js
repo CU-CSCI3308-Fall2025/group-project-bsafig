@@ -215,7 +215,7 @@ app.post('/send-friend-request', async(req, res) => {
     }
 
     try {
-        const existing = await db.any(
+        const existing = await db.oneOrNone(
             `SELECT * FROM friendships 
              WHERE (user_id = $1 AND friend_id = $2)
              OR (user_id = $2 AND friend_id = $1)`, [currentUserId, friend_id]
@@ -252,18 +252,6 @@ app.post('/accept-friend-request', async(req, res) => {
              SET status = 'accepted'
              WHERE user_id = $1 AND friend_id = $2 AND status = 'pending'`, [sender_id, currentUserId]
         );
-
-        // Create mutual friendship if not exists
-        const reverse = await db.oneOrNone(
-            `SELECT * FROM friendships WHERE user_id = $1 AND friend_id = $2`, [currentUserId, sender_id]
-        );
-
-        if (!reverse) {
-            await db.none(
-                `INSERT INTO friendships (user_id, friend_id, status)
-                 VALUES ($1, $2, 'accepted')`, [currentUserId, sender_id]
-            );
-        }
 
         res.json({ message: 'Friend request accepted!' });
     } catch (error) {
