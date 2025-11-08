@@ -44,13 +44,8 @@ app.engine('hbs', exphbs.engine({
 app.set('view engine', 'hbs');
 app.set('views', './views');
 
-<<<<<<< HEAD
-
 /* REGISTRATION ENDPOINTS */
 
-
-=======
->>>>>>> 7c8bbfba0a12bc53d893f9e2cd59ae691de10d38
 // Login page
 app.get('/login', (req, res) => {
     res.render('pages/login', { message: null });
