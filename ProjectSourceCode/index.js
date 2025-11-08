@@ -147,8 +147,27 @@ app.get('/logout', (req, res) => {
 });
 
 // Home page
-app.get('/home', (req, res) => {
-    res.render('pages/home', { user: req.session.user });
+app.get('/home', async(req, res) => {
+    const currentUser = req.session.user;
+
+    try {
+        // Fetch all reviews with user info
+        const reviews = await db.any(`
+            SELECT r.review_id, r.music_name, r.rating, r.content, r.created_at,
+                   u.username, COALESCE(u.profile_picture_url, $1) AS profile_picture_url
+            FROM reviews r
+            JOIN users u ON r.user_id = u.user_id
+            ORDER BY r.created_at DESC
+        `, [DEFAULT_PROFILE_PIC]);
+
+        res.render('pages/home', {
+            user: currentUser,
+            reviews
+        });
+    } catch (error) {
+        console.error('Error loading home page:', error.message);
+        res.status(500).send('Server error loading posts.');
+    }
 });
 
 // Friends page (loads pending requests)
@@ -348,23 +367,23 @@ app.post('/unfriend', async(req, res) => {
 
 // GET Settings View - authenticated user can edit their settings 
 // TO DO: link to a button in profile.hbs
-app.get('/profile/settings', (req, res) => { 
-    res.render('pages/settings', { 
+app.get('/profile/settings', (req, res) => {
+    res.render('pages/settings', {
         user: req.session.user,
-        message: null 
+        message: null
     });
 });
 
 // create 3 POST requests for 3 separate form changes
 // POST Update Username
-app.post('/profile/settings/updateUsername', async (req, res) => {
+app.post('/profile/settings/updateUsername', async(req, res) => {
     const { newUsername } = req.body;
     const currentUserId = req.session.user.user_id;
 
     if (!newUsername || newUsername.trim() === '') {
-        return res.render('pages/settings', { 
+        return res.render('pages/settings', {
             user: req.session.user,
-            message: 'Username cannot be empty.' 
+            message: 'Username cannot be empty.'
         });
     }
 
@@ -383,7 +402,7 @@ app.post('/profile/settings/updateUsername', async (req, res) => {
 
         // update the session with the new user 
         req.session.user.username = newUsername;
-        
+
         // reloads page for the user 
         return res.render('pages/settings', {
             user: req.session.user,
@@ -400,7 +419,7 @@ app.post('/profile/settings/updateUsername', async (req, res) => {
 });
 
 // POST Update Password
-app.post('/profile/settings/updatePassword', async (req, res) => {
+app.post('/profile/settings/updatePassword', async(req, res) => {
     const { newPassword, confirmPassword } = req.body;
     const currentUserId = req.session.user.user_id;
 
@@ -424,7 +443,7 @@ app.post('/profile/settings/updatePassword', async (req, res) => {
                 console.error('Logout error after password change:', err);
                 return res.status(500).send('Password updated, but could not log out.');
             }
-            
+
             res.render('pages/login', { message: 'Password successfully updated! Please log in again.' });
         });
 
@@ -441,11 +460,11 @@ app.post('/profile/settings/updatePassword', async (req, res) => {
 });
 
 // POST Update Profile Picture URL
-app.post('/profile/settings/updatePicture', async (req, res) => {
+app.post('/profile/settings/updatePicture', async(req, res) => {
     const { profilePicUrl } = req.body;
     const currentUserId = req.session.user.user_id;
     // TO DO: a DEFAULT_PROFILE_PIC express object must be defined 
-    const DEFAULT_PROFILE_PIC = 'TO DO'; 
+    const DEFAULT_PROFILE_PIC = 'TO DO';
 
     // use provided URL. if empty, use NULL which should revert to default
     const newProfilePicUrl = (profilePicUrl && profilePicUrl.trim() !== '') ? profilePicUrl : null;
@@ -476,7 +495,7 @@ app.post('/profile/settings/updatePicture', async (req, res) => {
 /* PROFILE ENDPOINTS */
 
 // GET Profile View (viewing a specific user's profile) 
-app.get('/profile/:username', async (req, res) => {
+app.get('/profile/:username', async(req, res) => {
     const targetUsername = req.params.username;
     const currentUserId = req.session.user.user_id;
 
@@ -492,20 +511,20 @@ app.get('/profile/:username', async (req, res) => {
 
         // Fetch friend count 
         const friends = await db.one(
-                `SELECT COUNT(*) AS friend_count 
+            `SELECT COUNT(*) AS friend_count 
                 FROM friendships 
                 WHERE status = 'accepted' AND 
                 (user_id = $1)`, [req.session.user.user_id]
-            );  
+        );
         friendCount = friends.friend_count
 
-       // Fetch posts 
+        // Fetch posts 
         const posts = await db.any(
-                `SELECT content, created_at AS "createdAt"
+            `SELECT content, created_at AS "createdAt"
                 FROM reviews
                 WHERE user_id = $1
                 ORDER BY created_at DESC`, [req.session.user.user_id]
-            );
+        );
 
         // Render the page
         res.render('pages/profile', {
@@ -529,7 +548,7 @@ app.get('/profile/:username', async (req, res) => {
 
 // POST Create a new review post
 app.get('/postbox', (req, res) => {
-  res.render('pages/postbox', { user: req.session.user });
+    res.render('pages/postbox', { user: req.session.user });
 });
 
 app.post('/post-review', async(req, res) => {
@@ -537,16 +556,15 @@ app.post('/post-review', async(req, res) => {
     const userId = req.session.user.user_id;
     if (!userId) return res.status(401).send('User not logged in.');
 
-  try {
-    await db.none(
-      'INSERT INTO reviews(user_id, music_name, rating, content) VALUES($1, $2, $3, $4)',
-      [userId, music_name, rating, content]
-    );
-    res.redirect('/home'); //can also redirect to profile page to show the review
-  } catch (error) {
-    console.error('Error posting review:', error.message);
-    res.status(500).send('Error posting review: ' + error.message);
-  }
+    try {
+        await db.none(
+            'INSERT INTO reviews(user_id, music_name, rating, content) VALUES($1, $2, $3, $4)', [userId, music_name, rating, content]
+        );
+        res.redirect('/home'); //can also redirect to profile page to show the review
+    } catch (error) {
+        console.error('Error posting review:', error.message);
+        res.status(500).send('Error posting review: ' + error.message);
+    }
 });
 
 // Port listener

@@ -1,2 +1,28 @@
 <!-- TEST MESSAGE FOR AUTH -->
-<p>Successful login attempt</p>
+{{> message}}
+
+<div class="container mt-4" style="max-width: 700px;">
+  <h2 class="mb-4 text-center">Recent Reviews</h2>
+
+  {{#if reviews.length}}
+    {{#each reviews}}
+      <div class="card mb-3 shadow-sm rounded-3">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <img src="{{this.profile_picture_url}}" 
+                 alt="Profile Picture" 
+                 class="rounded-circle me-2"
+                 width="40" height="40">
+            <strong><a href="/profile/{{this.username}}" class="text-decoration-none">{{this.username}}</a></strong>
+          </div>
+          <h5 class="card-title">{{this.music_name}}</h5>
+          <p class="card-text">{{this.content}}</p>
+          <p class="text-muted mb-0">Rating: {{this.rating}} / 10</p>
+          <small class="text-muted">{{this.created_at}}</small>
+        </div>
+      </div>
+    {{/each}}
+  {{else}}
+    <p class="text-center text-muted">No reviews have been posted yet.</p>
+  {{/if}}
+</div>
