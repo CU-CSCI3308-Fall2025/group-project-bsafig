@@ -1,0 +1,179 @@
+<div class="container mt-5" style="max-width: 600px;">
+  <h2 class="text-center mb-4">Find Friends</h2>
+
+  <!-- Search bar -->
+  <form id="searchForm" class="mb-3">
+    <input type="text" id="searchInput" name="query" class="form-control" placeholder="Search for users...">
+  </form>
+
+  {{> message}}
+
+  <!-- Search results -->
+  <div id="results"></div>
+
+  <hr class="my-4">
+
+  <!-- Sent friend requests -->
+  <h4 class="mb-3 text-center">Sent Friend Requests</h4>
+  <div id="sentRequests">
+    {{#if sentRequests.length}}
+      {{#each sentRequests}}
+        <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+          <div><strong>{{this.username}}</strong></div>
+          <button class="btn btn-warning btn-sm" onclick="cancelRequest({{this.receiver_id}})">Cancel Request</button>
+        </div>
+      {{/each}}
+    {{else}}
+      <p class="text-center text-muted">No sent requests.</p>
+    {{/if}}
+  </div>
+
+  <!-- Pending friend requests -->
+  <h4 class="mb-3 text-center mt-4">Pending Friend Requests</h4>
+  <div id="pendingRequests">
+    {{#if pendingRequests.length}}
+      {{#each pendingRequests}}
+        <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+          <div><strong>{{this.username}}</strong> sent you a friend request.</div>
+          <div>
+            <button class="btn btn-success btn-sm me-2" onclick="acceptRequest({{this.sender_id}})">Accept</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectRequest({{this.sender_id}})">Reject</button>
+          </div>
+        </div>
+      {{/each}}
+    {{else}}
+      <p class="text-center text-muted">No pending requests.</p>
+    {{/if}}
+  </div>
+</div>
+
+
+  <!-- Friends Section -->
+  <!-- Displays a list of all accepted friends for the logged-in user.
+       If there are no friends, a message is shown instead. -->
+  <h4 class="mb-3 text-center mt-4">Friends</h4>
+
+  <!-- This container will dynamically display the friend list or a message -->
+  <div id="friendsList">
+    <p class="text-center text-muted">Loading friends...</p>
+  </div>
+
+
+<script>
+  // Load the list of friends when the page finishes loading
+  document.addEventListener('DOMContentLoaded', loadFriends);
+
+
+  const form = document.getElementById('searchForm');
+  const input = document.getElementById('searchInput');
+  const resultsDiv = document.getElementById('results');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const query = input.value.trim();
+    if (!query) return;
+
+    const res = await fetch(`/search-friends?query=${encodeURIComponent(query)}`);
+    const users = await res.json();
+
+    if (!users || users.length === 0) {
+      resultsDiv.innerHTML = '<p>No users found.</p>';
+      return;
+    }
+
+    resultsDiv.innerHTML = users.map(user => `
+      <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+        <div>
+          <strong>${user.username}</strong>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="sendRequest(${user.user_id})">Add Friend</button>
+      </div>
+    `).join('');
+  });
+
+  async function sendRequest(friendId) {
+    const res = await fetch('/send-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friend_id: friendId })
+    });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  async function acceptRequest(senderId) {
+    const res = await fetch('/accept-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender_id: senderId })
+    });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  async function rejectRequest(senderId) {
+    const res = await fetch('/reject-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender_id: senderId })
+    });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  async function cancelRequest(receiverId) {
+    const res = await fetch('/cancel-friend-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ receiver_id: receiverId })
+    });
+    const data = await res.json();
+    alert(data.message);
+    location.reload();
+  }
+
+  // Fetch and render all accepted friends
+  async function loadFriends() {
+    const res = await fetch('/get-friends');
+    const friends = await res.json();
+
+    const container = document.getElementById('friendsList');
+
+    // If no friends exist, display a message
+    if (!friends.length) {
+      container.innerHTML = '<p class="text-center text-muted">You do not have any friends yet.</p>';
+      return;
+    }
+
+    // Otherwise, create a Bootstrap card for each friend
+    // Each card shows the friend’s username, their total number of friends,
+    // and an "Unfriend" button.
+    container.innerHTML = friends.map(f => `
+      <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+        <div>
+          <strong>${f.username}</strong><br>
+          <small class="text-muted">
+            ${f.friend_count} friend${Number(f.friend_count) !== 1 ? 's' : ''}
+          </small>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="unfriend(${f.user_id})">Unfriend</button>
+      </div>
+    `).join('');
+  }
+
+  // Remove an existing friend and refresh the list
+  async function unfriend(friendId) {
+    await fetch('/unfriend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId })
+    });
+
+    // Reload the list after deletion
+    loadFriends();
+  }
+
+</script>
