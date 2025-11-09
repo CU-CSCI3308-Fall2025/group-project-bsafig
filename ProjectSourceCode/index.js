@@ -444,8 +444,6 @@ app.post('/profile/settings/updatePassword', async (req, res) => {
 app.post('/profile/settings/updatePicture', async (req, res) => {
     const { profilePicUrl } = req.body;
     const currentUserId = req.session.user.user_id;
-    // TO DO: a DEFAULT_PROFILE_PIC express object must be defined 
-    const DEFAULT_PROFILE_PIC = 'TO DO'; 
 
     // use provided URL. if empty, use NULL which should revert to default
     const newProfilePicUrl = (profilePicUrl && profilePicUrl.trim() !== '') ? profilePicUrl : null;
@@ -495,7 +493,7 @@ app.get('/profile/:username', async (req, res) => {
                 `SELECT COUNT(*) AS friend_count 
                 FROM friendships 
                 WHERE status = 'accepted' AND 
-                (user_id = $1)`, [req.session.user.user_id]
+                (user_id = $1 OR friend_id = $1)`, [targetUser.user_id]
             );  
         friendCount = friends.friend_count
 
@@ -504,7 +502,7 @@ app.get('/profile/:username', async (req, res) => {
                 `SELECT content, created_at AS "createdAt"
                 FROM reviews
                 WHERE user_id = $1
-                ORDER BY created_at DESC`, [req.session.user.user_id]
+                ORDER BY created_at DESC`, [targetUser.user_id]
             );
 
         // Render the page
@@ -512,8 +510,8 @@ app.get('/profile/:username', async (req, res) => {
             user: {
                 id: targetUser.user_id,
                 username: targetUser.username,
-                // profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
-                profilePicUrl: targetUser.profile_pic_url,
+                // profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
+                profilePicUrl: targetUser.profile_picture_url,
                 friendCount: friendCount
             },
             posts: posts,
