@@ -444,8 +444,6 @@ app.post('/profile/settings/updatePassword', async (req, res) => {
 app.post('/profile/settings/updatePicture', async (req, res) => {
     const { profilePicUrl } = req.body;
     const currentUserId = req.session.user.user_id;
-    // TO DO: a DEFAULT_PROFILE_PIC express object must be defined 
-    const DEFAULT_PROFILE_PIC = 'TO DO'; 
 
     // use provided URL. if empty, use NULL which should revert to default
     const newProfilePicUrl = (profilePicUrl && profilePicUrl.trim() !== '') ? profilePicUrl : null;
@@ -469,6 +467,36 @@ app.post('/profile/settings/updatePicture', async (req, res) => {
             user: req.session.user,
             message: 'An error occurred while updating your profile picture.'
         });
+    }
+});
+
+// POST Delete Account Endpoint
+app.post('/profile/settings/deleteAccount', async (req, res) => {
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        // Delete user and associated data (requires ON DELETE CASCADE in DB setup)
+        await db.none('DELETE FROM users WHERE user_id = $1', [currentUserId]);
+
+        // Destroy the session and redirect to login
+        req.session.destroy(err => {
+            if (err) {
+                console.error('Logout error after account deletion:', err);
+                // Even on error, redirect since the user is deleted
+            }
+            // Redirect to login with a message
+            res.render('pages/login', { message: 'Your account has been successfully deleted.' });
+        });
+
+    } catch (error) {
+        console.error('Account deletion error:', error.message);
+        // If an error occurs before destroy, render the settings page with an error
+        if (!res.headersSent) {
+            return res.status(500).render('pages/settings', {
+                user: req.session.user,
+                message: 'An error occurred while deleting your account.'
+            });
+        }
     }
 });
 
