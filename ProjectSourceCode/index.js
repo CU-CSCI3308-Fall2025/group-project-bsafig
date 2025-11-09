@@ -347,7 +347,6 @@ app.post('/unfriend', async(req, res) => {
 /* SETTINGS ENDPOINTS */
 
 // GET Settings View - authenticated user can edit their settings 
-// TO DO: link to a button in profile.hbs
 app.get('/profile/settings', (req, res) => { 
     res.render('pages/settings', { 
         user: req.session.user,
@@ -418,7 +417,7 @@ app.post('/profile/settings/updatePassword', async (req, res) => {
         // update the password hash in the database
         await db.none('UPDATE users SET password_hash = $1 WHERE user_id = $2', [newPasswordHash, currentUserId]);
 
-        // [consider optional if wanted], destroy and redirect to login to reauthenticate
+        // destroy session and redirect to login to reauthenticate
         req.session.destroy(err => {
             if (err) {
                 console.error('Logout error after password change:', err);
