@@ -9,15 +9,6 @@
             </div>
             {{/if}}
 
-
-        <!-- 
-            place three separate forms here,
-            each pointing to the correct POST endpoint:
-            1. /profile/settings/username
-            2. /profile/settings/password
-            3. /profile/settings/picture
-        -->
-
         <!-- Change Username Form -->
         <div class="card mb-4">
             <div class="card-body">
@@ -58,15 +49,28 @@
         <div class="card mb-4">
             <div class="card-body">
                 <h5 class="card-title">Change Profile Picture</h5>
-                <form action="/profile/settings/updatePicture" method="POST" enctype="multipart/form-data">
+                <form action="/profile/settings/updatePicture" method="POST">
                     <div class="mb-3">
                         <label for="profilePicture" class="form-label">New Profile Picture</label>
-                        <input type="file" class="form-control" id="profilePicture" name="profilePicture" accept="image/*" required>
+                        <input type="url" class="form-control" id="profilePicUrl" name="profilePicUrl" placeholder="https://example.com/photo.jpg" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Update Profile Picture</button>
                 </form>
             </div>
         </div>
+
+        <!-- Delete Account -->
+        <div class="card mb-4 border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">Danger Zone</h5>
+                    <p class="card-text">
+                        Permanently delete your account. **This action is irreversible.** All your data, posts, and friendships will be lost.
+                    </p>
+                    <form action="/profile/settings/deleteAccount" method="POST" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This cannot be undone.');">
+                        <button type="submit" class="btn btn-danger">Delete Account</button>
+                    </form>
+                </div>
+            </div>
 
     </div>
 </div>
