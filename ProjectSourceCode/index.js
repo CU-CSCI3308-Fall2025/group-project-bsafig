@@ -347,7 +347,6 @@ app.post('/unfriend', async(req, res) => {
 /* SETTINGS ENDPOINTS */
 
 // GET Settings View - authenticated user can edit their settings 
-// TO DO: link to a button in profile.hbs
 app.get('/profile/settings', (req, res) => { 
     res.render('pages/settings', { 
         user: req.session.user,
@@ -418,7 +417,7 @@ app.post('/profile/settings/updatePassword', async (req, res) => {
         // update the password hash in the database
         await db.none('UPDATE users SET password_hash = $1 WHERE user_id = $2', [newPasswordHash, currentUserId]);
 
-        // [consider optional if wanted], destroy and redirect to login to reauthenticate
+        // destroy session and redirect to login to reauthenticate
         req.session.destroy(err => {
             if (err) {
                 console.error('Logout error after password change:', err);
@@ -467,6 +466,36 @@ app.post('/profile/settings/updatePicture', async (req, res) => {
             user: req.session.user,
             message: 'An error occurred while updating your profile picture.'
         });
+    }
+});
+
+// POST Delete Account Endpoint
+app.post('/profile/settings/deleteAccount', async (req, res) => {
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        // Delete user and associated data (requires ON DELETE CASCADE in DB setup)
+        await db.none('DELETE FROM users WHERE user_id = $1', [currentUserId]);
+
+        // Destroy the session and redirect to login
+        req.session.destroy(err => {
+            if (err) {
+                console.error('Logout error after account deletion:', err);
+                // Even on error, redirect since the user is deleted
+            }
+            // Redirect to login with a message
+            res.render('pages/login', { message: 'Your account has been successfully deleted.' });
+        });
+
+    } catch (error) {
+        console.error('Account deletion error:', error.message);
+        // If an error occurs before destroy, render the settings page with an error
+        if (!res.headersSent) {
+            return res.status(500).render('pages/settings', {
+                user: req.session.user,
+                message: 'An error occurred while deleting your account.'
+            });
+        }
     }
 });
 
