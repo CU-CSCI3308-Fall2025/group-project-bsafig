@@ -7,6 +7,30 @@ const session = require('express-session');
 const exphbs = require('express-handlebars');
 require('dotenv').config();
 
+let spotifyToken = null;
+let tokenExpiresAt = null;
+
+async function getSpotifyToken() {
+    if (spotifyToken && Date.now() < tokenExpiresAt) {
+        return spotifyToken;
+    }
+
+    const response = await axios.post('https://accounts.spotify.com/api/token', 
+        new URLSearchParams({ grant_type: 'client_credentials' }), {
+            headers: {
+                'Authorization': 'Basic ' + Buffer.from(
+                    process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET
+                ).toString('base64'),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        }
+    );
+
+    spotifyToken = response.data.access_token;
+    tokenExpiresAt = Date.now() + response.data.expires_in * 1000;
+    return spotifyToken;
+}
+
 // Initialize app
 const app = express();
 
@@ -595,6 +619,25 @@ app.post('/post-review', async(req, res) => {
         console.error('Error posting review:', error.message);
         res.status(500).send('Error posting review: ' + error.message);
     }
+});
+
+// Spotify Search API Endpoint
+app.get('/spotify-search', async (req, res) => {
+  const { q, type = 'track,artist,album', offset = 0 } = req.query;
+  if (!q) return res.status(400).send('Missing query');
+
+  try {
+    const token = await getSpotifyToken();
+    const response = await axios.get('https://api.spotify.com/v1/search', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { q, type, limit: 10, offset: parseInt(offset) }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Spotify search failed:', error.message);
+    res.status(500).send('Spotify API error');
+  }
 });
 
 // Port listener
