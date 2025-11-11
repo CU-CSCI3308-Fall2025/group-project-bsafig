@@ -576,6 +576,68 @@ app.get('/profile/:username', async(req, res) => {
     }
 });
 
+/* STATUS CREATION ENDPOINTS */
+
+// GET Create New Status Form
+app.get('/profile/status/create', (req, res) => {
+    res.render('pages/create-status', { 
+        user: req.session.user,
+        message: null 
+    });
+});
+
+// POST Create New Status (Listening To + Optional Note)
+app.post('/profile/status', async (req, res) => {
+
+    // TO DO: songName is currently a temporary variable from the form in create-status.hbs
+        // if external API integration is successful, then this will allow a user to search an existing song from external db
+        // otherwise, just allow a user to put any song here, basically an empty text box (if external api is not successful)
+        // the current logic is only DATA VALIDATION, NOT the business logic; 
+        // an actual, verifiable song has not been implemented
+    const { songName, note } = req.body; 
+    const userId = req.session.user.user_id;
+
+    // Validation: a song must be chosen 
+    if (!songName || songName.trim() === '') {
+        return res.render('pages/create-status', {
+            user: req.session.user,
+            message: 'A song is required to set your status.',
+            error: true
+        });
+    }
+
+    // if the note is empty or whitespace, set it to NULL for the database
+    const statusNote = (note && note.trim() !== '') ? note.trim() : null;
+
+    try {
+        // A user can only have one status at a time, so:
+        // Insert a new status; if the user_id already exists, then update the according conflicting fields. 
+        await db.none(
+            `INSERT INTO current_statuses(user_id, song_name, note) 
+            VALUES($1, $2, $3)
+            ON CONFLICT (user_id) DO UPDATE SET 
+                song_name = EXCLUDED.song_name, 
+                note = EXCLUDED.note, 
+                updated_at = CURRENT_TIMESTAMP`, // Update timestamp on conflict
+            [userId, songName.trim(), statusNote]
+        );
+        
+        console.log(`User ${userId} successfully set status: Listening to "${songName}"`);
+
+        res.redirect(`/profile/${req.session.user.username}`);
+
+    } catch (error) {
+        console.error('Error setting status:', error.message);
+        return res.status(500).render('pages/create-status', {
+            user: req.session.user,
+            message: 'An unexpected error occurred while setting your status.',
+            error: true
+        });
+    }
+});
+
+/* REVIEW ENDPOINTS */
+
 // POST Create a new review post
 app.get('/postbox', (req, res) => {
     res.render('pages/postbox', { user: req.session.user });
