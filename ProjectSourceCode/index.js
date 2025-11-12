@@ -549,19 +549,20 @@ app.get('/profile/:username', async(req, res) => {
 
         // Fetch posts 
         const posts = await db.any(
-            `SELECT review_id, rating, content, created_at AS "createdAt"
-                FROM reviews
-                WHERE user_id = $1
-                ORDER BY created_at DESC`, [targetUser.user_id]
+            `SELECT r.review_id, r.rating, r.content, r.created_at, r.music_name,
+            COALESCE(u.profile_picture_url, $2) AS "profile_picture_url", u.username
+                FROM reviews r
+                JOIN users u ON u.user_id = r.user_id
+                WHERE r.user_id = $1
+                ORDER BY r.created_at DESC`, [targetUser.user_id, DEFAULT_PROFILE_PIC]
             );
-
         // Render the page
         res.render('pages/profile', {
             user: {
                 id: targetUser.user_id,
                 username: targetUser.username,
-                // profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
-                profilePicUrl: targetUser.profile_picture_url,
+                profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
+                // profilePicUrl: targetUser.profile_picture_url,
                 friendCount: friendCount
             },
             posts: posts,
@@ -604,7 +605,8 @@ app.post('/editPost', async(req, res) => {
         await db.none(
             `UPDATE reviews
             SET rating = $1,
-                content = $2
+                content = $2,
+                created_at = CURRENT_TIMESTAMP
             WHERE review_id = $3 AND
             user_id = $4`, [rating, content, review_id, user_id]
         );
