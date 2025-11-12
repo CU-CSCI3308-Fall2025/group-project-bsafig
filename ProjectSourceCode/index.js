@@ -539,6 +539,14 @@ app.get('/profile/:username', async(req, res) => {
         // Check if this is the authenticated user's own profile
         const isOwnProfile = targetUser.user_id === currentUserId;
 
+        // Fetch Current Status
+        const currentStatus = await db.oneOrNone(
+            `SELECT song_name, note
+             FROM current_statuses
+             WHERE user_id = $1`, 
+            [targetUser.user_id]
+        );
+
         // Fetch friend count 
         const friends = await db.one(
             `SELECT COUNT(*) AS friend_count 
@@ -565,6 +573,7 @@ app.get('/profile/:username', async(req, res) => {
                 profilePicUrl: targetUser.profile_picture_url,
                 friendCount: friendCount
             },
+            status: currentStatus,
             posts: posts,
             isOwnProfile: isOwnProfile,
             title: `${targetUser.username}'s Profile`
