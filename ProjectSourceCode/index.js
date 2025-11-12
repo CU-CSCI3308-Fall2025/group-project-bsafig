@@ -325,7 +325,7 @@ app.get('/get-friends', async(req, res) => {
     const uid = req.session.user.user_id;
 
     const friends = await db.any(`
-    SELECT u.user_id, u.username,
+    SELECT u.user_id, u.username, cs.song_name, cs.note,
            (
              SELECT COUNT(*)
              FROM friendships f2
@@ -335,6 +335,7 @@ app.get('/get-friends', async(req, res) => {
     FROM friendships f
     JOIN users u
       ON u.user_id = CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END
+    LEFT JOIN current_statuses cs ON u.user_id = cs.user_id
     WHERE (f.user_id = $1 OR f.friend_id = $1)
       AND f.status = 'accepted'
     ORDER BY u.username;
