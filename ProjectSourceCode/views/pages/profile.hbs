@@ -15,11 +15,11 @@
     <h2 class="fw-bold">{{user.username}}</h2>
 
     <!-- Friend count -->
-    <p class="text-muted">
-      <a href="/friends/{{user.id}}" class="text-decoration-none">
-        {{user.friendCount}} friends
-      </a>
-    </p>
+   <p class="text-muted">
+     <a href="/friends#friendsList" class="text-decoration-none">
+       {{user.friendCount}} friends
+     </a>
+   </p>
 
     <!-- Edit profile button (only if viewing own profile) --> 
     {{#if isOwnProfile}}
