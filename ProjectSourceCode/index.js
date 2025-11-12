@@ -538,7 +538,6 @@ app.get('/profile/:username', async(req, res) => {
 
         // Check if this is the authenticated user's own profile
         const isOwnProfile = targetUser.user_id === currentUserId;
-
         // Fetch friend count 
         const friends = await db.one(
             `SELECT COUNT(*) AS friend_count 
@@ -550,7 +549,7 @@ app.get('/profile/:username', async(req, res) => {
 
         // Fetch posts 
         const posts = await db.any(
-            `SELECT review_id, content, created_at AS "createdAt"
+            `SELECT review_id, rating, content, created_at AS "createdAt"
                 FROM reviews
                 WHERE user_id = $1
                 ORDER BY created_at DESC`, [targetUser.user_id]
@@ -595,6 +594,19 @@ app.post('/post-review', async(req, res) => {
         console.error('Error posting review:', error.message);
         res.status(500).send('Error posting review: ' + error.message);
     }
+});
+
+app.post('/editPost', async(req, res) => {
+    const {review_id, rating, content} = req.body;
+    const user_id = req.session.user.user_id;
+    await db.none(
+        `UPDATE reviews
+        SET rating = $1,
+            content = $2
+        WHERE review_id = $3 AND
+        user_id = $4`, [rating, content, review_id, user_id]
+    );
+    res.redirect(`/profile/${req.session.user.username}`);
 });
 
 // Port listener
