@@ -243,7 +243,12 @@ app.get('/search-friends', async(req, res) => {
              FROM users 
              WHERE username ILIKE $1 
              AND user_id != $2
-             LIMIT 10`, [`%${query}%`, currentUserId]
+             AND user_id NOT IN (
+                 SELECT friend_id FROM friendships WHERE user_id = $2
+                 UNION
+                 SELECT user_id FROM friendships WHERE friend_id = $2
+             )
+             LIMIT 10`, [`${query}%`, currentUserId]
         );
 
         res.json(users);
@@ -604,6 +609,7 @@ app.get('/profile/:username', async(req, res) => {
             isOwnProfile: isOwnProfile,
             title: `${targetUser.username}'s Profile`
         });
+
 
     } catch (error) {
         console.error('Profile view error:', error.message);
