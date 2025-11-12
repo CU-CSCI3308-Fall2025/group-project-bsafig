@@ -43,8 +43,6 @@ CREATE TABLE IF NOT EXISTS current_statuses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- COMMENTS TABLE TBA --
-/*
 CREATE TABLE IF NOT EXISTS comments (
     comment_id SERIAL PRIMARY KEY,
     review_id INTEGER NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
@@ -52,4 +50,3 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-*/
