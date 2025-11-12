@@ -495,36 +495,51 @@ app.get('/profile/:username', async(req, res) => {
         // Check if this is the authenticated user's own profile
         const isOwnProfile = targetUser.user_id === currentUserId;
 
-        // Fetch friend count 
+        // Fetch friend count
+        // Fetch friend count (count both directions)
         const friends = await db.one(
-            `SELECT COUNT(*) AS friend_count 
-                FROM friendships 
-                WHERE status = 'accepted' AND 
-                (user_id = $1)`, [req.session.user.user_id]
+        `SELECT COUNT(*) AS friend_count
+            FROM friendships
+            WHERE status = 'accepted'
+            AND (user_id = $1 OR friend_id = $1)`,
+        [targetUser.user_id]
         );
-        friendCount = friends.friend_count
+        friendCount = Number(friends.friend_count);
+ 
+        // const friends = await db.one(
+        //     `SELECT COUNT(*) AS friend_count 
+        //         FROM friendships 
+        //         WHERE status = 'accepted' AND 
+        //         (user_id = $1)`, [targetUser.user_id]
+        // );
+        // friendCount = friends.friend_count
 
         // Fetch posts 
         const posts = await db.any(
             `SELECT content, created_at AS "createdAt"
                 FROM reviews
                 WHERE user_id = $1
-                ORDER BY created_at DESC`, [req.session.user.user_id]
+                ORDER BY created_at DESC`, [targetUser.user_id]
         );
 
         // Render the page
         res.render('pages/profile', {
-            user: {
-                id: targetUser.user_id,
-                username: targetUser.username,
-                // profilePicUrl: targetUser.profile_pic_url || DEFAULT_PROFILE_PIC,
-                profilePicUrl: targetUser.profile_pic_url,
-                friendCount: friendCount
-            },
-            posts: posts,
-            isOwnProfile: isOwnProfile,
-            title: `${targetUser.username}'s Profile`
+        // Keep logged-in user here so navbar/partials remain correct
+        user: req.session.user,
+
+        // Viewed profile data
+        profileUser: {
+            id: targetUser.user_id,
+            username: targetUser.username,
+            profilePicUrl: targetUser.profile_pic_url,
+            friendCount: friendCount
+        },
+
+        posts: posts,
+        isOwnProfile: isOwnProfile,
+        title: `${targetUser.username}'s Profile`
         });
+
 
     } catch (error) {
         console.error('Profile view error:', error.message);

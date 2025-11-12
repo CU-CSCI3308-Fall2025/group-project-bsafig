@@ -4,20 +4,20 @@
     <!-- Profile picture, need default image -->
     <div class="mb-3">
         <img
-            src="{{#if user.profilePicUrl}}{{user.profilePicUrl}}{{else}}/images/default-profile.png{{/if}}"
-            alt="{{user.username}}'s profile picture"
+            src="{{#if profileUser.profilePicUrl}}{{profileUser.profilePicUrl}}{{else}}/images/default-profile.png{{/if}}"
+            alt="{{profileUser.username}}'s profile picture"
             class="img-fluid rounded-circle border"
             style="width: 150px; height: 150px; object-fit: cover;"
         />
     </div>
 
     <!-- Username -->
-    <h2 class="fw-bold">{{user.username}}</h2>
+    <h2 class="fw-bold">{{profileUser.username}}</h2>
 
     <!-- Friend count -->
    <p class="text-muted">
      <a href="/friends#friendsList" class="text-decoration-none">
-       {{user.friendCount}} friends
+       {{profileUser.friendCount}} friends
      </a>
    </p>
 
@@ -31,7 +31,7 @@
 
   <!-- Right column: Posts -->
   <div class="col-md-8">
-    <h4 class="border-bottom pb-2 mb-3">Posts by {{user.username}}</h4>
+    <h4 class="border-bottom pb-2 mb-3">Posts by {{profileUser.username}}</h4>
 
     {{#if posts.length}}
       {{#each posts}}
