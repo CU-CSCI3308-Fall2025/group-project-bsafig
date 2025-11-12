@@ -599,15 +599,42 @@ app.post('/post-review', async(req, res) => {
 app.post('/editPost', async(req, res) => {
     const {review_id, rating, content} = req.body;
     const user_id = req.session.user.user_id;
-    await db.none(
-        `UPDATE reviews
-        SET rating = $1,
-            content = $2
-        WHERE review_id = $3 AND
-        user_id = $4`, [rating, content, review_id, user_id]
-    );
-    res.redirect(`/profile/${req.session.user.username}`);
+    const username = req.session.user.username
+    try {
+        await db.none(
+            `UPDATE reviews
+            SET rating = $1,
+                content = $2
+            WHERE review_id = $3 AND
+            user_id = $4`, [rating, content, review_id, user_id]
+        );
+        res.redirect(`/profile/${username}`);
+
+    } catch (error) {
+        console.error('Error Editing Review:', error.message);
+        res.status(500).send('Could not edit review');
+    }
 });
+
+app.post('/deletePost', async(req, res) => {
+    const {review_id} = req.body;
+    const user_id = req.session.user.user_id;
+    const username = req.session.user.username
+    try {
+        await db.none(
+            `DELETE FROM reviews
+            WHERE review_id = $1 AND
+            user_id = $2`, [review_id, user_id]
+        );
+        res.redirect(`/profile/${username}`);
+
+    } catch(error) {
+        console.error(error);
+        res.status(500).send('Could not delete post');
+    }
+});
+
+
 
 // Port listener
 const PORT = process.env.PORT || 3000;
