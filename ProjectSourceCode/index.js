@@ -7,6 +7,30 @@ const session = require('express-session');
 const exphbs = require('express-handlebars');
 require('dotenv').config();
 
+let spotifyToken = null;
+let tokenExpiresAt = null;
+
+async function getSpotifyToken() {
+    if (spotifyToken && Date.now() < tokenExpiresAt) {
+        return spotifyToken;
+    }
+
+    const response = await axios.post('https://accounts.spotify.com/api/token', 
+        new URLSearchParams({ grant_type: 'client_credentials' }), {
+            headers: {
+                'Authorization': 'Basic ' + Buffer.from(
+                    process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET
+                ).toString('base64'),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        }
+    );
+
+    spotifyToken = response.data.access_token;
+    tokenExpiresAt = Date.now() + response.data.expires_in * 1000;
+    return spotifyToken;
+}
+
 // Initialize app
 const app = express();
 
@@ -147,8 +171,27 @@ app.get('/logout', (req, res) => {
 });
 
 // Home page
-app.get('/home', (req, res) => {
-    res.render('pages/home', { user: req.session.user });
+app.get('/home', async(req, res) => {
+    const currentUser = req.session.user;
+
+    try {
+        // Fetch all reviews with user info
+        const reviews = await db.any(`
+            SELECT r.review_id, r.music_name, r.rating, r.content, r.created_at,
+                   u.username, COALESCE(u.profile_picture_url, $1) AS profile_picture_url
+            FROM reviews r
+            JOIN users u ON r.user_id = u.user_id
+            ORDER BY r.created_at DESC
+        `, [DEFAULT_PROFILE_PIC]);
+
+        res.render('pages/home', {
+            user: currentUser,
+            reviews
+        });
+    } catch (error) {
+        console.error('Error loading home page:', error.message);
+        res.status(500).send('Server error loading posts.');
+    }
 });
 
 // Friends page (loads pending requests)
@@ -311,7 +354,7 @@ app.get('/get-friends', async(req, res) => {
     const uid = req.session.user.user_id;
 
     const friends = await db.any(`
-    SELECT u.user_id, u.username,
+    SELECT u.user_id, u.username, cs.song_name, cs.note,
            (
              SELECT COUNT(*)
              FROM friendships f2
@@ -321,6 +364,7 @@ app.get('/get-friends', async(req, res) => {
     FROM friendships f
     JOIN users u
       ON u.user_id = CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END
+    LEFT JOIN current_statuses cs ON u.user_id = cs.user_id
     WHERE (f.user_id = $1 OR f.friend_id = $1)
       AND f.status = 'accepted'
     ORDER BY u.username;
@@ -423,7 +467,7 @@ app.post('/profile/settings/updatePassword', async(req, res) => {
         // update the password hash in the database
         await db.none('UPDATE users SET password_hash = $1 WHERE user_id = $2', [newPasswordHash, currentUserId]);
 
-        // [consider optional if wanted], destroy and redirect to login to reauthenticate
+        // destroy session and redirect to login to reauthenticate
         req.session.destroy(err => {
             if (err) {
                 console.error('Logout error after password change:', err);
@@ -477,6 +521,36 @@ app.post('/profile/settings/updatePicture', async(req, res) => {
     }
 });
 
+// POST Delete Account Endpoint
+app.post('/profile/settings/deleteAccount', async (req, res) => {
+    const currentUserId = req.session.user.user_id;
+
+    try {
+        // Delete user and associated data (requires ON DELETE CASCADE in DB setup)
+        await db.none('DELETE FROM users WHERE user_id = $1', [currentUserId]);
+
+        // Destroy the session and redirect to login
+        req.session.destroy(err => {
+            if (err) {
+                console.error('Logout error after account deletion:', err);
+                // Even on error, redirect since the user is deleted
+            }
+            // Redirect to login with a message
+            res.render('pages/login', { message: 'Your account has been successfully deleted.' });
+        });
+
+    } catch (error) {
+        console.error('Account deletion error:', error.message);
+        // If an error occurs before destroy, render the settings page with an error
+        if (!res.headersSent) {
+            return res.status(500).render('pages/settings', {
+                user: req.session.user,
+                message: 'An error occurred while deleting your account.'
+            });
+        }
+    }
+});
+
 
 /* PROFILE ENDPOINTS */
 
@@ -495,49 +569,45 @@ app.get('/profile/:username', async(req, res) => {
         // Check if this is the authenticated user's own profile
         const isOwnProfile = targetUser.user_id === currentUserId;
 
-        // Fetch friend count
-        // Fetch friend count (count both directions)
-        const friends = await db.one(
-        `SELECT COUNT(*) AS friend_count
-            FROM friendships
-            WHERE status = 'accepted'
-            AND (user_id = $1 OR friend_id = $1)`,
-        [targetUser.user_id]
+        // Fetch Current Status
+        const currentStatus = await db.oneOrNone(
+            `SELECT song_name, note
+             FROM current_statuses
+             WHERE user_id = $1`, 
+            [targetUser.user_id]
         );
-        friendCount = Number(friends.friend_count);
- 
-        // const friends = await db.one(
-        //     `SELECT COUNT(*) AS friend_count 
-        //         FROM friendships 
-        //         WHERE status = 'accepted' AND 
-        //         (user_id = $1)`, [targetUser.user_id]
-        // );
-        // friendCount = friends.friend_count
+
+        // Fetch friend count 
+        const friends = await db.one(
+            `SELECT COUNT(*) AS friend_count 
+                FROM friendships 
+                WHERE status = 'accepted' AND 
+                (user_id = $1 OR friend_id = $1)`, [targetUser.user_id]
+            );  
+        friendCount = friends.friend_count
 
         // Fetch posts 
         const posts = await db.any(
-            `SELECT content, created_at AS "createdAt"
-                FROM reviews
-                WHERE user_id = $1
-                ORDER BY created_at DESC`, [targetUser.user_id]
-        );
-
+            `SELECT r.review_id, r.rating, r.content, r.created_at, r.music_name,
+            COALESCE(u.profile_picture_url, $2) AS "profile_picture_url", u.username
+                FROM reviews r
+                JOIN users u ON u.user_id = r.user_id
+                WHERE r.user_id = $1
+                ORDER BY r.created_at DESC`, [targetUser.user_id, DEFAULT_PROFILE_PIC]
+            );
         // Render the page
         res.render('pages/profile', {
-        // Keep logged-in user here so navbar/partials remain correct
-        user: req.session.user,
-
-        // Viewed profile data
-        profileUser: {
-            id: targetUser.user_id,
-            username: targetUser.username,
-            profilePicUrl: targetUser.profile_pic_url,
-            friendCount: friendCount
-        },
-
-        posts: posts,
-        isOwnProfile: isOwnProfile,
-        title: `${targetUser.username}'s Profile`
+            user: {
+                id: targetUser.user_id,
+                username: targetUser.username,
+                profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
+                // profilePicUrl: targetUser.profile_picture_url,
+                friendCount: friendCount
+            },
+            status: currentStatus,
+            posts: posts,
+            isOwnProfile: isOwnProfile,
+            title: `${targetUser.username}'s Profile`
         });
 
 
@@ -546,6 +616,68 @@ app.get('/profile/:username', async(req, res) => {
         res.status(500).send('Error loading profile.');
     }
 });
+
+/* STATUS CREATION ENDPOINTS */
+
+// GET Create New Status Form
+app.get('/profile/status/create', (req, res) => {
+    res.render('pages/create-status', { 
+        user: req.session.user,
+        message: null 
+    });
+});
+
+// POST Create New Status (Listening To + Optional Note)
+app.post('/profile/status', async (req, res) => {
+
+    // TO DO: songName is currently a temporary variable from the form in create-status.hbs
+        // if external API integration is successful, then this will allow a user to search an existing song from external db
+        // otherwise, just allow a user to put any song here, basically an empty text box (if external api is not successful)
+        // the current logic is only DATA VALIDATION, NOT the business logic; 
+        // an actual, verifiable song has not been implemented
+    const { songName, note } = req.body; 
+    const userId = req.session.user.user_id;
+
+    // Validation: a song must be chosen 
+    if (!songName || songName.trim() === '') {
+        return res.render('pages/create-status', {
+            user: req.session.user,
+            message: 'A song is required to set your status.',
+            error: true
+        });
+    }
+
+    // if the note is empty or whitespace, set it to NULL for the database
+    const statusNote = (note && note.trim() !== '') ? note.trim() : null;
+
+    try {
+        // A user can only have one status at a time, so:
+        // Insert a new status; if the user_id already exists, then update the according conflicting fields. 
+        await db.none(
+            `INSERT INTO current_statuses(user_id, song_name, note) 
+            VALUES($1, $2, $3)
+            ON CONFLICT (user_id) DO UPDATE SET 
+                song_name = EXCLUDED.song_name, 
+                note = EXCLUDED.note, 
+                updated_at = CURRENT_TIMESTAMP`, // Update timestamp on conflict
+            [userId, songName.trim(), statusNote]
+        );
+        
+        console.log(`User ${userId} successfully set status: Listening to "${songName}"`);
+
+        res.redirect(`/profile/${req.session.user.username}`);
+
+    } catch (error) {
+        console.error('Error setting status:', error.message);
+        return res.status(500).render('pages/create-status', {
+            user: req.session.user,
+            message: 'An unexpected error occurred while setting your status.',
+            error: true
+        });
+    }
+});
+
+/* REVIEW ENDPOINTS */
 
 // POST Create a new review post
 app.get('/postbox', (req, res) => {
@@ -565,6 +697,64 @@ app.post('/post-review', async(req, res) => {
     } catch (error) {
         console.error('Error posting review:', error.message);
         res.status(500).send('Error posting review: ' + error.message);
+    }
+});
+
+// Spotify Search API Endpoint
+app.get('/spotify-search', async (req, res) => {
+  const { q, type = 'track,artist,album', offset = 0 } = req.query;
+  if (!q) return res.status(400).send('Missing query');
+
+  try {
+    const token = await getSpotifyToken();
+    const response = await axios.get('https://api.spotify.com/v1/search', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { q, type, limit: 10, offset: parseInt(offset) }
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Spotify search failed:', error.message);
+    res.status(500).send('Spotify API error');
+  }
+});
+
+app.post('/editPost', async(req, res) => {
+    const {review_id, rating, content} = req.body;
+    const user_id = req.session.user.user_id;
+    const username = req.session.user.username
+    try {
+        await db.none(
+            `UPDATE reviews
+            SET rating = $1,
+                content = $2,
+                created_at = CURRENT_TIMESTAMP
+            WHERE review_id = $3 AND
+            user_id = $4`, [rating, content, review_id, user_id]
+        );
+        res.redirect(`/profile/${username}`);
+
+    } catch (error) {
+        console.error('Error Editing Review:', error.message);
+        res.status(500).send('Could not edit review');
+    }
+});
+
+app.post('/deletePost', async(req, res) => {
+    const {review_id} = req.body;
+    const user_id = req.session.user.user_id;
+    const username = req.session.user.username
+    try {
+        await db.none(
+            `DELETE FROM reviews
+            WHERE review_id = $1 AND
+            user_id = $2`, [review_id, user_id]
+        );
+        res.redirect(`/profile/${username}`);
+
+    } catch(error) {
+        console.error(error);
+        res.status(500).send('Could not delete post');
     }
 });
 

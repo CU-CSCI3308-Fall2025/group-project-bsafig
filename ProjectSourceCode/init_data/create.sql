@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS reviews (
     review_id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     music_name VARCHAR(255) NOT NULL,
     rating INTEGER NOT NULL CHECK (rating >= 0 AND rating <= 10),
     content TEXT NOT NULL,
@@ -30,20 +30,25 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 CREATE TABLE IF NOT EXISTS friendships (
-    user_id INTEGER NOT NULL REFERENCES users(user_id),
-    friend_id INTEGER NOT NULL REFERENCES users(user_id),
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    friend_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'accepted')),
     PRIMARY KEY (user_id, friend_id)
 );
 
-
+CREATE TABLE IF NOT EXISTS current_statuses (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    song_name VARCHAR(255) NOT NULL,
+    note VARCHAR(100) DEFAULT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- COMMENTS TABLE TBA --
 /*
 CREATE TABLE IF NOT EXISTS comments (
     comment_id SERIAL PRIMARY KEY,
-    review_id INTEGER NOT NULL REFERENCES reviews(review_id),
-    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    review_id INTEGER NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

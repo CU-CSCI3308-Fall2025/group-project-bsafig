@@ -151,20 +151,34 @@
     // Otherwise, create a Bootstrap card for each friend
     // Each card shows the friend’s username, their total number of friends,
     // and an "Unfriend" button.
-      container.innerHTML = friends.map(f => `
-        <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
-          <div>
-            <a href="/profile/${f.username}" class="text-decoration-none">
-              <strong>${f.username}</strong>
-            </a><br>
-            <small class="text-muted">
-              ${f.friend_count} friend${Number(f.friend_count) !== 1 ? 's' : ''}
+    container.innerHTML = friends.map(f => {
+    // Check if the friend has a status
+    const statusHtml = f.song_name 
+      ? `
+        <div class="mt-1">
+            <small class="text-success fw-bold">
+                <span class="me-1">🎵</span> Listening: ${f.song_name}
             </small>
-          </div>
-          <button class="btn btn-danger btn-sm" onclick="unfriend(${f.user_id})">Unfriend</button>
+            ${f.note ? `<small class="text-muted d-block fst-italic ms-3">"${f.note}"</small>` : ''}
         </div>
-      `).join('');
-  }
+      `
+      : ''; // If no song_name, statusHtml is an empty string
+
+    return `
+      <div class="card mb-2 p-2 d-flex justify-content-between align-items-center flex-row">
+        <div>
+          <a href="/profile/${f.username}" class="text-decoration-none">
+            <strong>${f.username}</strong>
+          </a><br>
+          <small class="text-muted">
+            ${f.friend_count} friend${Number(f.friend_count) !== 1 ? 's' : ''}
+          </small>
+          ${statusHtml} </div>
+        <button class="btn btn-danger btn-sm" onclick="unfriend(${f.user_id})">Unfriend</button>
+      </div>
+    `;
+  }).join('');
+}
 
   // Remove an existing friend and refresh the list
   async function unfriend(friendId) {

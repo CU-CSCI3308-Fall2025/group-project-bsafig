@@ -1,0 +1,28 @@
+<h2>Set Your Current Status</h2>
+
+{{#if message}}
+<div class="alert {{#if error}}alert-danger{{else}}alert-success{{/if}}" role="alert">
+  {{message}}
+</div>
+{{/if}}
+
+<form action="/profile/status" method="POST">
+  <div class="mb-3">
+    <label for="songName" class="form-label">Song / Artist (Required)</label>
+    <input type="text" class="form-control" id="songName" name="songName" required>
+    <div class="form-text">
+      Enter the song you're currently listening to. 
+    </div>
+  </div>
+  
+  <div class="mb-3">
+    <label for="note" class="form-label">Note (Optional)</label>
+    <input type="text" class="form-control" id="note" name="note" maxlength="100">
+    <div class="form-text">
+      Add a quick note about your mood or the song. Max 100 characters.
+    </div>
+  </div>
+  
+  <button type="submit" class="btn btn-primary">Set Status</button>
+  <a href="/profile/{{user.username}}" class="btn btn-secondary">Cancel</a>
+</form>

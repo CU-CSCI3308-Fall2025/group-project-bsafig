@@ -1,9 +1,30 @@
+{{! can add to main CSS file later}}
+<style>
+#spotifyResults {
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;           /* scrolling */
+  overflow-x: hidden;
+  box-sizing: border-box;
+  z-index: 1000;              
+  background: white;     
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+</style>
+
 <div class="bg-light p-4 border rounded shadow-sm my-4">
   <form id="postForm" action="/post-review" method="POST">
     <h5>Create a Review</h5>
-    <div class="mb-3">
+    <div class="mb-3 position-relative">
       <label for="musicName" class="form-label">Add Music</label>
-      <input type="text" id="musicName" name="music_name" class="form-control" placeholder="Type the name of a song, album, or artist" required>
+      <input type="text" id="musicName" name="music_name" class="form-control" placeholder="Type the name of a song, album, or artist" required autocomplete="off">
+      
+      <!-- Dropdown results -->
+      <ul id="spotifyResults" class="list-group position-absolute w-100"></ul>
     </div>
 
     <div class="mb-3">
@@ -19,3 +40,5 @@
     <button type="submit" class="btn btn-primary">Post Review</button>
   </form>
 </div>
+
+<script src="/js/spotifySearch.js"></script>
