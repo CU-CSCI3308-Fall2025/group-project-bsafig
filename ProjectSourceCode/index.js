@@ -550,7 +550,7 @@ app.get('/profile/:username', async(req, res) => {
 
         // Fetch posts 
         const posts = await db.any(
-            `SELECT content, created_at AS "createdAt"
+            `SELECT review_id, content, created_at AS "createdAt"
                 FROM reviews
                 WHERE user_id = $1
                 ORDER BY created_at DESC`, [targetUser.user_id]
