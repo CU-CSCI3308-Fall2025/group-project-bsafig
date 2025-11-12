@@ -2,12 +2,9 @@
   <!-- Left column: Profile info -->
   <div class="col-md-4 text-center">
     <div class="mb-3">
-        <img
-            src="{{#if user.profilePicUrl}}{{user.profilePicUrl}}{{else}}/images/default-profile.png{{/if}}"
-            alt="{{user.username}}'s profile picture"
-            class="img-fluid rounded-circle border"
-            style="width: 150px; height: 150px; object-fit: cover;"
-        />
+      <img src="{{#if user.profilePicUrl}}{{user.profilePicUrl}}{{else}}/images/default-profile.png{{/if}}"
+        alt="{{user.username}}'s profile picture" class="img-fluid rounded-circle border"
+        style="width: 150px; height: 150px; object-fit: cover;" />
     </div>
 
     <!-- Username -->
@@ -20,7 +17,7 @@
       </a>
     </p>
 
-    <!-- Edit profile button (only if viewing own profile) --> 
+    <!-- Edit profile button (only if viewing own profile) -->
     {{#if isOwnProfile}}
     <a href="/profile/settings" class="btn btn-outline-primary btn-sm mt-2">
       Settings
@@ -33,18 +30,78 @@
     <h4 class="border-bottom pb-2 mb-3">Posts by {{user.username}}</h4>
 
     {{#if posts.length}}
-      {{#each posts}}
-        <div class="card mb-3">
-          <div class="card-body">
-            <p class="card-text">{{this.content}}</p>
-            <small class="text-muted">
-              Posted on {{this.createdAt}}
-            </small>
-          </div>
+    {{#each posts}}
+    <div class="card mb-3">
+      <div class="card-body">
+        {{!-- <p class="card-text">{{this.content}}</p>
+        <small class="text-muted">
+          Posted on {{this.createdAt}}
+        </small> --}}
+        <div class="d-flex align-items-center mb-2">
+          <img src="{{this.profile_picture_url}}" alt="Profile Picture" class="rounded-circle me-2" width="40"
+            height="40">
+          <strong><a href="/profile/{{this.username}}" class="text-decoration-none">{{this.username}}</a></strong>
         </div>
-      {{/each}}
+        <h5 class="card-title">{{this.music_name}}</h5>
+        <p class="card-text">{{this.content}}</p>
+        <p class="text-muted mb-0">Rating: {{this.rating}} / 10</p>
+        <small class="text-muted">{{this.created_at}}</small>
+
+        <!-- Edit and Delete buttons for user -->
+        {{#if ../isOwnProfile}}
+        <div class="mt-2">
+          <!-- Edit button -->
+          <button type="button" class="btn btn-sm btn-primary align-middle"
+            onclick="toggleEditForm({{this.review_id}})">
+            Edit
+          </button>
+
+          <!-- Delete button -->
+          <form action="/deletePost" method="POST" style="display:inline;">
+            <input type="hidden" name="review_id" value="{{this.review_id}}">
+            <button type="submit" class="btn btn-sm btn-danger align-middle"
+              onclick="return confirm('Are you sure you want to delete this post?');">
+              Delete
+            </button>
+          </form>
+        </div>
+
+        <!-- Form for edit -->
+        <form id="editForm-{{this.review_id}}" action="/editPost" method="POST" style="display:none;" class="mt-2">
+          <input type="hidden" name="review_id" value="{{this.review_id}}">
+          <label for="content-{{this.review_id}}">Content:</label>
+          <textarea name="content" id="content-{{this.review_id}}" class="form-control mb-2">{{this.content}}</textarea>
+
+          <label for="rating-{{this.review_id}}">Rating (0 - 10):</label>
+          <input type="number" name="rating" id="rating-{{this.review_id}}" class="form-control mb-2"
+            value="{{this.rating}}" min="0" max="10">
+
+          <button type="submit" class="btn btn-sm btn-primary">Save</button>
+          <button type="button" class="btn btn-sm btn-secondary"
+            onclick="toggleEditForm({{this.review_id}})">Cancel</button>
+        </form>
+        {{/if}}
+
+
+      </div>
+    </div>
+    {{/each}}
     {{else}}
-      <p class="text-muted">No posts yet.</p>
+    <p class="text-muted">No posts yet.</p>
     {{/if}}
   </div>
 </div>
+
+
+<script>
+  function toggleEditForm(reviewId) {
+    const form = document.getElementById(`editForm-${reviewId}`);
+    // Show form
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+    } else {
+      // Hide form
+      form.style.display = 'none';
+    }
+  }
+</script>
