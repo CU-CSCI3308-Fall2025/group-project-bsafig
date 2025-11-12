@@ -36,7 +36,12 @@ CREATE TABLE IF NOT EXISTS friendships (
     PRIMARY KEY (user_id, friend_id)
 );
 
-
+CREATE TABLE IF NOT EXISTS current_statuses (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    song_name VARCHAR(255) NOT NULL,
+    note VARCHAR(100) DEFAULT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- COMMENTS TABLE TBA --
 /*
