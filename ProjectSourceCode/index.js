@@ -578,6 +578,7 @@ app.get('/profile/:username', async(req, res) => {
         );
 
         // Fetch friend count (count both directions)
+        // test to see if commit user changes
         const friends = await db.one(
             `SELECT COUNT(*) AS friend_count 
                 FROM friendships 
