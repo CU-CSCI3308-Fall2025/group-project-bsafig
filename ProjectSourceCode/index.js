@@ -577,7 +577,7 @@ app.get('/profile/:username', async(req, res) => {
             [targetUser.user_id]
         );
 
-        // Fetch friend count 
+        // Fetch friend count (count both directions)
         const friends = await db.one(
             `SELECT COUNT(*) AS friend_count 
                 FROM friendships 
