@@ -579,12 +579,14 @@ app.get('/profile/:username', async(req, res) => {
 
         // Fetch friend count (count both directions)
         // test to see if commit user changes
+        // test commit 0
         const friends = await db.one(
-            `SELECT COUNT(*) AS friend_count 
-                FROM friendships 
-                WHERE status = 'accepted' AND 
-                (user_id = $1 OR friend_id = $1)`, [targetUser.user_id]
-            );  
+            `SELECT COUNT(*) AS friend_count
+                FROM friendships
+                WHERE status = 'accepted'
+                AND (user_id = $1 OR friend_id = $1)`,
+            [targetUser.user_id]
+        );  
         friendCount = friends.friend_count
 
         // Fetch posts 
