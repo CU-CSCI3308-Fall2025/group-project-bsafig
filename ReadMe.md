@@ -25,12 +25,12 @@ Add the following .env file to the ProjectSourceCode folder:
 ```
 
 
-Docker compose up in ProjectSourceCode folder.
-It should show up at localhost:3000.
+Docker compose up in the ProjectSourceCode folder.  
+It should show up at localhost:3000.  
 
 ## How to run tests
-In the docker file, make sure you change npm start to npm run testandrun (read comment for command).
-Then, docker compose up.
+In the docker-compose.yaml file, make sure you change npm start to npm run testandrun (it is also written in comment).  
+Then, docker compose up.  
 
 ## Deployed Application
 Here's the link to the deployed application:
