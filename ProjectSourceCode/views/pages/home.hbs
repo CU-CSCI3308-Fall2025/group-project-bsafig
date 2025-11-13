@@ -13,12 +13,28 @@
                  alt="Profile Picture" 
                  class="rounded-circle me-2"
                  width="40" height="40">
-            <strong><a href="/profile/{{this.username}}" class="text-decoration-none">{{this.username}}</a></strong>
+            <strong>
+              <a href="/profile/{{this.username}}" class="text-decoration-none">{{this.username}}</a>
+            </strong>
           </div>
+  
           <h5 class="card-title">{{this.music_name}}</h5>
           <p class="card-text">{{this.content}}</p>
           <p class="text-muted mb-0">Rating: {{this.rating}} / 10</p>
           <small class="text-muted">{{this.created_at}}</small>
+  
+          <hr>
+  
+          <!-- Comments Section -->
+          <div id="comments-{{this.review_id}}" class="comments mb-2"></div>
+  
+          <!-- Comment Form -->
+          <form class="comment-form" data-review-id="{{this.review_id}}">
+            <div class="input-group">
+              <input type="text" name="content" class="form-control" placeholder="Add a comment..." required>
+              <button class="btn btn-primary" type="submit">Post</button>
+            </div>
+          </form>
         </div>
       </div>
     {{/each}}
@@ -26,3 +42,63 @@
     <p class="text-center text-muted">No reviews have been posted yet.</p>
   {{/if}}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  // Fetch and render comments for each review
+  const reviewCards = document.querySelectorAll('.comment-form');
+
+  for (const form of reviewCards) {
+    const reviewId = form.getAttribute('data-review-id');
+    await loadComments(reviewId);
+  }
+
+  // Submit comment form
+  document.querySelectorAll('.comment-form').forEach(form => {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reviewId = form.dataset.reviewId;
+      const input = form.querySelector('input[name="content"]');
+      const content = input.value.trim();
+
+      if (!content) return;
+
+      const res = await fetch('/add-comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_id: reviewId, content })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        input.value = '';
+        await loadComments(reviewId);
+      } else {
+        alert(data.error || 'Failed to post comment.');
+      }
+    });
+  });
+});
+
+async function loadComments(reviewId) {
+  try {
+    const res = await fetch(`/get-comments/${reviewId}`);
+    const comments = await res.json();
+
+    const container = document.getElementById(`comments-${reviewId}`);
+    container.innerHTML = comments.map(c => `
+      <div class="d-flex align-items-start mb-2">
+        <img src="${c.profile_picture_url}" class="rounded-circle me-2" width="32" height="32" alt="User">
+        <div>
+          <strong><a href="/profile/${c.username}" class="text-decoration-none">${c.username}</a></strong>
+          <p class="mb-0">${c.content}</p>
+          <small class="text-muted">${new Date(c.created_at).toLocaleString()}</small>
+        </div>
+      </div>
+    `).join('') || '<p class="text-muted">No comments yet.</p>';
+  } catch (err) {
+    console.error('Failed to load comments:', err);
+  }
+}
+</script>
