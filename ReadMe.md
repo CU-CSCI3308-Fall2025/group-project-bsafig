@@ -20,8 +20,8 @@ Add the following .env file to the ProjectSourceCode folder:
     POSTGRES_DB="users_db"
     # API vars
     SESSION_SECRET="super duper secret!"
-    SPOTIFY_CLIENT_ID= YOUR SPOTIFY ID HERE
-    SPOTIFY_CLIENT_SECRET= YOUR SPOTIFY SECRET HERE
+    SPOTIFY_CLIENT_ID=YOUR SPOTIFY ID HERE
+    SPOTIFY_CLIENT_SECRET=YOUR SPOTIFY SECRET HERE
 ```
 
 
