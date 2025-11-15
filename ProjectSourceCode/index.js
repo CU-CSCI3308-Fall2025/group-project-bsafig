@@ -677,6 +677,38 @@ app.post('/profile/status', async (req, res) => {
     }
 });
 
+// POST Delete Current Status
+app.post('/profile/status/delete', async (req, res) => {
+    const userId = req.session.user.user_id;
+
+    try {
+        // Delete the status associated with the user_id
+        const result = await db.result(
+            `DELETE FROM current_statuses
+             WHERE user_id = $1`,
+            [userId]
+        );
+
+        if (result.rowCount > 0) {
+            console.log(`User ${userId} successfully removed status.`);
+            // Redirect to the profile page with a success message 
+            res.redirect(`/profile/${req.session.user.username}?statusMessage=Status removed successfully.`);
+        } else {
+            // No status was found to delete
+            res.redirect(`/profile/${req.session.user.username}?statusMessage=No status to remove.`);
+        }
+
+    } catch (error) {
+        console.error('Error deleting status:', error.message);
+        // Redirect back to the status creation page or profile with an error
+        res.status(500).render('pages/create-status', {
+            user: req.session.user,
+            message: 'An unexpected error occurred while removing your status.',
+            error: true
+        });
+    }
+});
+
 /* REVIEW ENDPOINTS */
 
 // POST Create a new review post

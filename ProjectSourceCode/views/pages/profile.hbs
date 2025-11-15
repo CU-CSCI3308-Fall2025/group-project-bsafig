@@ -26,6 +26,14 @@
       Set Status
     </a>
 
+    {{#if status}}
+    <form action="/profile/status/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove your current status?');">
+        <button type="submit" class="btn btn-sm btn-outline-danger mt-2 me-2">
+            Remove Status
+        </button>
+    </form>
+    {{/if}}
+
     <!-- Edit profile button (only if viewing own profile) --> 
     <a href="/profile/settings" class="btn btn-outline-primary btn-sm mt-2">
       Settings
