@@ -8,11 +8,12 @@
 
 <form action="/profile/status" method="POST">
   <div class="mb-3">
-    <label for="songName" class="form-label">Song / Artist (Required)</label>
-    <input type="text" class="form-control" id="songName" name="songName" required>
+    <label for="songName" class="form-label">Listening To (Required)</label>
+    <input type="text" class="form-control" id="songName" name="songName" required autocomplete="off" placeholder="Search for a song, album, or artist on Spotify">
     <div class="form-text">
       Enter the song you're currently listening to. 
     </div>
+      <ul id="spotifyResultsStatus" class="list-group position-absolute w-100"></ul>
   </div>
   
   <div class="mb-3">
@@ -26,3 +27,22 @@
   <button type="submit" class="btn btn-primary">Set Status</button>
   <a href="/profile/{{user.username}}" class="btn btn-secondary">Cancel</a>
 </form>
+
+<style>
+#spotifyResultsStatus { 
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;        
+  overflow-x: hidden;
+  box-sizing: border-box;
+  z-index: 1000;              
+  background: white;     
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+</style>
+
+<script src="/js/spotifySearchStatus.js"></script>
