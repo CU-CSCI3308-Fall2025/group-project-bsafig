@@ -1,0 +1,17 @@
+11/12/25 Meeting 3 Notes
+
+Intro:
+- Did a demo showcasing new features from last week: delete account, friends list, status messages, edit and delete posts, spotify API integration
+
+Work:
+- James: Implemented delete account, implemented status messages to display on friends list. Will work on integrating spotify API to work with status, README, bugfixes and formatting
+- Ben: Revised search and home lists to work better and cleaner with the friends lists, reducing repeats and clutter. Future plan is to do the comments feature
+- Cara: Worked on footer for create posts, create posts, Spotify API integration, URL instead of nonfunctioning image upload for profile picture, minor bugs. Will work on README, bugfixes on friends and profile page displays, Spotigang icon redirect
+- Mason: Edit and delete post, cleaned code, consistent variable names. Future work plan to continue make things look cleaner, frontend, proper post footer.
+- George: Worked on profile pages, having it such that the list of friends allows you to click on the names, taking you to their profile. Future work: profile pictures should be any URL, not just .jpg, fix 'x friends' button
+
+Extras:
+- Overall consensus: we are very close to finishing MVP, with a few more functionalities and bugfixes and making things look cleaner left to do
+- Our presentation slot has been signed up for
+- Tomorrows lab is extra credit, easy points, just working on the project.
+- Confirmed that the 3 commits within branches are fine

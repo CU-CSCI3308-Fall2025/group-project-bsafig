@@ -72,7 +72,7 @@ app.set('views', './views');
 
 // Login page
 app.get('/login', (req, res) => {
-    res.render('pages/login', { message: null });
+    res.render('pages/login', { message: null, layout: false });
 });
 
 // Handle login form
@@ -112,7 +112,7 @@ app.get('/register', (req, res) => {
     if (req.session.user) {
         return res.redirect('/home');
     }
-    res.render('pages/register');
+    res.render('pages/register', {layout: false});
 });
 
 // Handle registration form
@@ -576,7 +576,9 @@ app.get('/profile/:username', async(req, res) => {
              WHERE user_id = $1`, [targetUser.user_id]
         );
 
-        // Fetch friend count 
+        // Fetch friend count (count both directions)
+        // test to see if commit user changes
+        // test commit 0
         const friends = await db.one(
             `SELECT COUNT(*) AS friend_count 
                 FROM friendships 
