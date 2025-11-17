@@ -802,6 +802,82 @@ app.post('/add-comment', async(req, res) => {
     }
 });
 
+// POST react to review
+app.post('/react-review', async(req, res) => {
+    const { review_id, type } = req.body;
+    const user_id = req.session.user.user_id;
+    if (!['like', 'dislike'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+
+    try {
+        const existing = await db.oneOrNone(
+            `SELECT reaction_id,type FROM review_reactions WHERE review_id=$1 AND user_id=$2`, [review_id, user_id]
+        );
+        if (existing) {
+            if (existing.type === type) {
+                await db.none(`DELETE FROM review_reactions WHERE reaction_id=$1`, [existing.reaction_id]);
+            } else {
+                await db.none(`UPDATE review_reactions SET type=$1 WHERE reaction_id=$2`, [type, existing.reaction_id]);
+            }
+        } else {
+            await db.none(`INSERT INTO review_reactions(review_id,user_id,type) VALUES($1,$2,$3)`, [review_id, user_id, type]);
+        }
+        res.json({ success: true });
+    } catch (err) { console.error(err);
+        res.status(500).json({ error: 'Failed to react' }) }
+});
+
+// GET review reaction counts
+app.get('/get-review-reactions/:reviewId', async(req, res) => {
+    const { reviewId } = req.params;
+    try {
+        const counts = await db.one(`
+      SELECT COUNT(*) FILTER (WHERE type='like') AS likes,
+             COUNT(*) FILTER (WHERE type='dislike') AS dislikes
+      FROM review_reactions
+      WHERE review_id=$1`, [reviewId]);
+        res.json(counts);
+    } catch (err) { console.error(err);
+        res.status(500).json({ likes: 0, dislikes: 0 }); }
+});
+
+// POST react to comment
+app.post('/react-comment', async(req, res) => {
+    const { comment_id, type } = req.body;
+    const user_id = req.session.user.user_id;
+    if (!['like', 'dislike'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+
+    try {
+        const existing = await db.oneOrNone(
+            `SELECT reaction_id,type FROM comment_reactions WHERE comment_id=$1 AND user_id=$2`, [comment_id, user_id]
+        );
+        if (existing) {
+            if (existing.type === type) {
+                await db.none(`DELETE FROM comment_reactions WHERE reaction_id=$1`, [existing.reaction_id]);
+            } else {
+                await db.none(`UPDATE comment_reactions SET type=$1 WHERE reaction_id=$2`, [type, existing.reaction_id]);
+            }
+        } else {
+            await db.none(`INSERT INTO comment_reactions(comment_id,user_id,type) VALUES($1,$2,$3)`, [comment_id, user_id, type]);
+        }
+        res.json({ success: true });
+    } catch (err) { console.error(err);
+        res.status(500).json({ error: 'Failed to react' }) }
+});
+
+// GET comment reaction counts
+app.get('/get-comment-reactions/:commentId', async(req, res) => {
+    const { commentId } = req.params;
+    try {
+        const counts = await db.one(`
+      SELECT COUNT(*) FILTER (WHERE type='like') AS likes,
+             COUNT(*) FILTER (WHERE type='dislike') AS dislikes
+      FROM comment_reactions
+      WHERE comment_id=$1`, [commentId]);
+        res.json(counts);
+    } catch (err) { console.error(err);
+        res.status(500).json({ likes: 0, dislikes: 0 }); }
+});
+
 // Port listener
 const PORT = process.env.PORT || 3000;
 // Assign the result of app.listen() (the HTTP server object) to a variable.

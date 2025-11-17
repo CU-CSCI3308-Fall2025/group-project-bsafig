@@ -1,4 +1,3 @@
-<!-- TEST MESSAGE FOR AUTH -->
 {{> message}}
 
 <div class="container mt-4" style="max-width: 700px;">
@@ -25,18 +24,19 @@
 
           <hr>
 
-          <!-- Comments Toggle Button -->
-          <button 
-            class="btn btn-outline-secondary btn-sm mb-2 comment-toggle" 
-            data-review-id="{{this.review_id}}">
-            💬 Comments (<span id="comment-count-{{this.review_id}}">0</span>)
-          </button>
+          <!-- Inline Reactions + Comments Toggle -->
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <button class="reaction-btn" data-review-id="{{this.review_id}}" data-type="like">👍 <span id="review-like-count-{{this.review_id}}">0</span></button>
+            <button class="reaction-btn" data-review-id="{{this.review_id}}" data-type="dislike">👎 <span id="review-dislike-count-{{this.review_id}}">0</span></button>
+            <button class="btn btn-outline-secondary btn-sm comment-toggle" data-review-id="{{this.review_id}}">
+              💬 Comments (<span id="comment-count-{{this.review_id}}">0</span>)
+            </button>
+          </div>
 
-          <!-- Collapsible Comments Wrapper -->
+          <!-- Collapsible Comments -->
           <div id="comments-wrapper-{{this.review_id}}" class="collapse">
             <div id="comments-{{this.review_id}}" class="comments mb-2"></div>
 
-            <!-- Comment Form -->
             <form class="comment-form" data-review-id="{{this.review_id}}">
               <div class="input-group mb-2">
                 <input type="text" name="content" class="form-control" placeholder="Add a comment..." required>
@@ -55,91 +55,131 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const forms = document.querySelectorAll('.comment-form');
+  const reactionButtons = document.querySelectorAll('.reaction-btn');
 
-  // Load comment counts initially
+  // Initialize comment counts
   for (const form of forms) {
     const reviewId = form.dataset.reviewId;
     await updateComments(reviewId, { loadOnlyCount: true });
+    await updateReactions(reviewId);
   }
 
-  // Toggle dropdown behavior
+  // Toggle comments dropdown
   document.querySelectorAll('.comment-toggle').forEach(btn => {
     btn.addEventListener('click', async () => {
       const reviewId = btn.dataset.reviewId;
       const wrapper = document.getElementById(`comments-wrapper-${reviewId}`);
-
       wrapper.classList.toggle('show');
 
-      // If opening, load comments
       if (wrapper.classList.contains('show')) {
         await updateComments(reviewId);
       }
     });
   });
 
-  // Handle posting a comment
+  // Handle posting comment
   forms.forEach(form => {
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const reviewId = form.dataset.reviewId;
       const input = form.querySelector('input[name="content"]');
       const content = input.value.trim();
-
       if (!content) return;
 
       const res = await fetch('/add-comment', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ review_id: reviewId, content })
       });
-
       const data = await res.json();
-
       if (data.success) {
         input.value = '';
-        await updateComments(reviewId);  // refresh comments + count
-      } else {
-        alert(data.error || 'Failed to post comment.');
-      }
+        await updateComments(reviewId);
+      } else alert(data.error || 'Failed to post comment.');
+    });
+  });
+
+  // Handle like/dislike clicks
+  reactionButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const reviewId = btn.dataset.reviewId;
+      const type = btn.dataset.type;
+      const res = await fetch('/react-review', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ review_id: reviewId, type })
+      });
+      const data = await res.json();
+      if (data.success) await updateReactions(reviewId);
+      else alert(data.error || 'Failed to react.');
     });
   });
 });
 
-
-/**
- * Loads comments and updates the visible count.
- * If loadOnlyCount = true, only updates the count (no rendering).
- */
-async function updateComments(reviewId, options = {}) {
-  const { loadOnlyCount = false } = options;
-
+// Update comments count + content
+async function updateComments(reviewId, options={}) {
+  const { loadOnlyCount=false } = options;
   try {
     const res = await fetch(`/get-comments/${reviewId}`);
     const comments = await res.json();
-
-    // Update comment count
-    const countEl = document.getElementById(`comment-count-${reviewId}`);
-    countEl.textContent = comments.length;
+    document.getElementById(`comment-count-${reviewId}`).textContent = comments.length;
 
     if (loadOnlyCount) return;
 
-    // Render comments into container
     const container = document.getElementById(`comments-${reviewId}`);
-    container.innerHTML = comments.length
-      ? comments.map(c => `
-          <div class="d-flex align-items-start mb-2">
-            <img src="${c.profile_picture_url}" class="rounded-circle me-2" width="32" height="32" alt="User">
-            <div>
-              <strong><a href="/profile/${c.username}" class="text-decoration-none">${c.username}</a></strong>
-              <p class="mb-0">${c.content}</p>
-              <small class="text-muted">${new Date(c.created_at).toLocaleString()}</small>
-            </div>
+    container.innerHTML = comments.length ? comments.map(c => `
+      <div class="d-flex align-items-start mb-2">
+        <img src="${c.profile_picture_url}" class="rounded-circle me-2" width="32" height="32" alt="User">
+        <div>
+          <strong><a href="/profile/${c.username}" class="text-decoration-none">${c.username}</a></strong>
+          <p class="mb-0">${c.content}</p>
+          <small class="text-muted">${new Date(c.created_at).toLocaleString()}</small>
+          <div class="d-flex gap-2 mt-1">
+            <button class="comment-reaction-btn" data-comment-id="${c.comment_id}" data-type="like">👍 <span id="comment-like-count-${c.comment_id}">0</span></button>
+            <button class="comment-reaction-btn" data-comment-id="${c.comment_id}" data-type="dislike">👎 <span id="comment-dislike-count-${c.comment_id}">0</span></button>
           </div>
-        `).join('')
-      : '<p class="text-muted">No comments yet.</p>';
+        </div>
+      </div>
+    `).join('') : '<p class="text-muted">No comments yet.</p>';
 
-  } catch (err) {
-    console.error('Failed to load comments:', err);
-  }
+    // Attach comment reaction handlers
+    container.querySelectorAll('.comment-reaction-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const commentId = btn.dataset.commentId;
+        const type = btn.dataset.type;
+        const res = await fetch('/react-comment', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ comment_id: commentId, type })
+        });
+        const data = await res.json();
+        if(data.success) await updateCommentReactions(commentId);
+      });
+    });
+
+    // Update reactions for newly rendered comments
+    comments.forEach(c => updateCommentReactions(c.comment_id));
+
+  } catch(err){ console.error(err); }
+}
+
+// Update post reaction counts
+async function updateReactions(reviewId){
+  try{
+    const res = await fetch(`/get-review-reactions/${reviewId}`);
+    const data = await res.json();
+    document.getElementById(`review-like-count-${reviewId}`).textContent = data.likes;
+    document.getElementById(`review-dislike-count-${reviewId}`).textContent = data.dislikes;
+  }catch(err){console.error(err);}
+}
+
+// Update comment reaction counts
+async function updateCommentReactions(commentId){
+  try{
+    const res = await fetch(`/get-comment-reactions/${commentId}`);
+    const data = await res.json();
+    document.getElementById(`comment-like-count-${commentId}`).textContent = data.likes;
+    document.getElementById(`comment-dislike-count-${commentId}`).textContent = data.dislikes;
+  }catch(err){console.error(err);}
 }
 </script>
