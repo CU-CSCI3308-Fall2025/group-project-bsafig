@@ -599,14 +599,19 @@ app.get('/profile/:username', async(req, res) => {
         );
         // Render the page
         res.render('pages/profile', {
-            user: {
+            // Keep logged-in user here so navbar/partials remain correct
+            user: req.session.user,
+
+            // Viewed profile data
+            profileUser: {
                 id: targetUser.user_id,
                 username: targetUser.username,
-                profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
+                // profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
                 // profilePicUrl: targetUser.profile_picture_url,
+                profilePicUrl: targetUser.profile_pic_url,
                 friendCount: friendCount
             },
-            status: currentStatus,
+            // status: currentStatus,
             posts: posts,
             isOwnProfile: isOwnProfile,
             title: `${targetUser.username}'s Profile`
