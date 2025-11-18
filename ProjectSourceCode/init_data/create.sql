@@ -6,9 +6,6 @@
     Do not include specific values for any serial keys, they auto-increment
     Do not include specific values for any timestamp fields, they default to the current timestamp
     Profile picure url is NULL by default
-
-    To access the database via psql, use the following command:
-    docker compose exec db psql -U postgres -d users_db
 */
 
 CREATE TABLE IF NOT EXISTS users (
@@ -43,8 +40,6 @@ CREATE TABLE IF NOT EXISTS current_statuses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- COMMENTS TABLE TBA --
-/*
 CREATE TABLE IF NOT EXISTS comments (
     comment_id SERIAL PRIMARY KEY,
     review_id INTEGER NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
@@ -52,4 +47,20 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-*/
+
+-- Likes / Dislikes tables
+CREATE TABLE IF NOT EXISTS review_reactions (
+    reaction_id SERIAL PRIMARY KEY,
+    review_id INTEGER NOT NULL REFERENCES reviews(review_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    type VARCHAR(10) NOT NULL CHECK (type IN ('like','dislike')),
+    UNIQUE (review_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS comment_reactions (
+    reaction_id SERIAL PRIMARY KEY,
+    comment_id INTEGER NOT NULL REFERENCES comments(comment_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    type VARCHAR(10) NOT NULL CHECK (type IN ('like','dislike')),
+    UNIQUE (comment_id, user_id)
+);

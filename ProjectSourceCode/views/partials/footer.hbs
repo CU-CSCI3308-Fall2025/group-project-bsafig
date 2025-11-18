@@ -1,7 +1,28 @@
-<footer class="footer bg-body-tertiary border-top text-center py-3 fixed-bottom">
+<footer class="footer clear-footer text-center py-3 fixed-bottom">
   <div class="container">
-    <a href="/postbox" class="btn btn-primary">
-      Create Post
+    <a href="/postbox" class="add-button" aria-label="Add post">
+      <i class="bi bi-plus-circle-fill"></i>
     </a>
   </div>
 </footer>
+
+<style>
+  .clear-footer {
+    background-color: transparent !important;
+    backdrop-filter: none;
+    border-top: none !important;
+  }
+    
+  .add-button i {
+    font-size: 3rem; /* makes icon large */
+  }
+
+  .add-button {
+    text-decoration: none; /* removes underline */
+  }
+
+  .add-button:hover i {
+    opacity: 0.8; /* subtle hover effect */
+  }
+
+</style>
