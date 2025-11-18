@@ -585,7 +585,8 @@ app.get('/profile/:username', async(req, res) => {
                 WHERE status = 'accepted' AND 
                 (user_id = $1 OR friend_id = $1)`, [targetUser.user_id]
         );
-        friendCount = friends.friend_count
+        // friendCount = friends.friend_count
+        friendCount = Number(friends.friend_count);
 
         // Fetch posts 
         const posts = await db.any(
