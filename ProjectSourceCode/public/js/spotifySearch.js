@@ -47,6 +47,7 @@ async function fetchResults(query, append = false) {
 
       li.addEventListener('click', () => {
         musicInput.value = name;
+
         resultsList.innerHTML = '';
       });
 
