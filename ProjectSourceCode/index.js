@@ -611,7 +611,7 @@ app.get('/profile/:username', async(req, res) => {
                 profilePicUrl: targetUser.profile_pic_url,
                 friendCount: friendCount
             },
-            // status: currentStatus,
+            status: currentStatus,
             posts: posts,
             isOwnProfile: isOwnProfile,
             title: `${targetUser.username}'s Profile`
