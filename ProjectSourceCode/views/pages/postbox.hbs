@@ -21,11 +21,13 @@
     <h5>Create a Review</h5>
     <div class="mb-3 position-relative">
       <label for="musicName" class="form-label">Add Music</label>
-      <input type="text" id="musicName" name="music_name" class="form-control" placeholder="Type the name of a song, album, or artist" required autocomplete="off">
+      <input type="text" id="musicName" name="music_search" class="form-control" placeholder="Type the name of a song, album, or artist" required autocomplete="off">
       
       <!-- Dropdown results -->
       <ul id="spotifyResults" class="list-group position-absolute w-100"></ul>
     </div>
+
+    <input type="hidden" id="verifiedMusicName" name="music_name" required>
 
     <div class="mb-3">
       <label for="rating" class="form-label">Rating (out of 10)</label>
@@ -37,7 +39,7 @@
       <textarea id="content" name="content" class="form-control" maxlength="1000" rows="4" required></textarea>
     </div>
 
-    <button type="submit" class="btn btn-primary">Post Review</button>
+    <button type="submit" class="btn btn-primary" id="postSubmitButton" disabled>Post Review</button>
   </form>
 </div>
 

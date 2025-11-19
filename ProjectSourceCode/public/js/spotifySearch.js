@@ -1,10 +1,25 @@
 const musicInput = document.getElementById('musicName'); // id has to be musicName !!
+const verifiedInput = document.getElementById('verifiedMusicName'); // 🚨 NEW: Hidden field for verified selection
 const resultsList = document.getElementById('spotifyResults');
+const submitButton = document.getElementById('postSubmitButton'); // 🚨 NEW: Submit button reference
 let debounceTimeout;
 let currentQuery = '';
 let offset = 0;
 let isLoading = false;
 let hasMore = true;
+
+// to enable/disable the button
+function setSelection(name) {
+    if (name) {
+        verifiedInput.value = name;
+        musicInput.value = name; // Update visible input with clean name
+        submitButton.disabled = false;
+        resultsList.innerHTML = '';
+    } else {
+        verifiedInput.value = ''; // Clear the verified field
+        submitButton.disabled = true; // Disable the button
+    }
+}
 
 async function fetchResults(query, append = false) {
   if (isLoading || !hasMore) return;
@@ -35,6 +50,12 @@ async function fetchResults(query, append = false) {
         musicInput.value = name;
         resultsList.innerHTML = '';
       });
+
+      // call the selection function to allow submit
+      li.addEventListener('click', () => {
+        setSelection(name);
+      });
+
       resultsList.appendChild(li);
     });
 
@@ -48,6 +69,9 @@ async function fetchResults(query, append = false) {
 
 // On typing
 musicInput.addEventListener('input', () => {
+  // clear the selection ability the moment it's typed
+  setSelection(null);
+
   clearTimeout(debounceTimeout);
   const query = musicInput.value.trim();
   if (!query) {
@@ -70,4 +94,3 @@ resultsList.addEventListener('scroll', () => {
   }
 });
 
-// TODO: when user clicks outside of search bar, clear search bar
