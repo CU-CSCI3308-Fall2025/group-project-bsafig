@@ -404,7 +404,7 @@ app.get('/profile/settings', (req, res) => {
     });
 });
 
-// create 4 POST requests for 4 separate form changes
+// create 3 POST requests for 3 separate form changes
 // POST Update Username
 app.post('/profile/settings/updateUsername', async(req, res) => {
     const { newUsername } = req.body;
@@ -486,49 +486,6 @@ app.post('/profile/settings/updatePassword', async(req, res) => {
                 message: 'An error occurred while updating your password.'
             });
         }
-    }
-});
-// Post Update Email
-app.post('/profile/settings/updateEmail', async(req, res) => {
-    const { newEmail } = req.body;
-    const currentUserId = req.session.user.user_id;
-    const currentEmail = req.session.user.email;
-
-    if (!newEmail || newEmail.trim() === '') {
-        return res.render('pages/settings', {
-            user: req.session.user,
-            message: 'Email cannot be empty.'
-        });
-    }
-
-    try {
-        // is email already taken?
-        const existingEmail = await db.oneOrNone('SELECT email FROM users WHERE email = $1 AND user_id != $2', [newEmail, currentUserId]);
-
-        if (existingEmail) {
-            return res.render('pages/settings', {
-                user: req.session.user,
-                message: 'This Email is already taken. Please choose another one.'
-            });
-        }
-
-        await db.none('UPDATE users SET email = $1 WHERE user_id = $2', [newEmail, currentUserId]);
-
-        // update the session with the new user 
-        req.session.user.email = newEmail;
-
-        // reloads page for the user 
-        return res.render('pages/settings', {
-            user: req.session.user,
-            message: 'Email successfully updated!'
-        });
-
-    } catch (error) {
-        console.error('Update Email error:', error.message);
-        return res.status(500).render('pages/settings', {
-            user: req.session.user,
-            message: 'An error occurred while updating your Email.'
-        });
     }
 });
 

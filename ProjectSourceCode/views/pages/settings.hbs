@@ -9,87 +9,68 @@
             </div>
             {{/if}}
 
-            <!-- Change Username Form -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Change Username</h5>
-                    <form action="/profile/settings/updateUsername" method="POST">
-                        <div class="mb-3">
-                            <label for="newUsername" class="form-label">New Username</label>
-                            <input type="text" class="form-control" id="newUsername" name="newUsername" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Username</button>
-                    </form>
-                </div>
+        <!-- Change Username Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Username</h5>
+                <form action="/profile/settings/updateUsername" method="POST">
+                    <div class="mb-3">
+                        <label for="newUsername" class="form-label">New Username</label>
+                        <input type="text" class="form-control" id="newUsername" name="newUsername" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Username</button>
+                </form>
             </div>
+        </div>
 
-            <!-- Change Password Form -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Change Password</h5>
-                    <form action="/profile/settings/updatePassword" method="POST">
-                        <div class="mb-3">
-                            <label for="currentPassword" class="form-label">Current Password</label>
-                            <input type="password" class="form-control" id="currentPassword" name="currentPassword"
-                                required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="newPassword" class="form-label">New Password</label>
-                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">Confirm Password</label>
-                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
-                                required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Password</button>
-                    </form>
-                </div>
+        <!-- Change Password Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Password</h5>
+                <form action="/profile/settings/updatePassword" method="POST">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </form>
             </div>
+        </div>
 
-            <!-- Change Email Form -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Change Email</h5>
-                    <form action="/profile/settings/updateEmail" method="POST">
-                        <div class="mb-3">
-                            <label for="newEmail" class="form-label">New Email</label>
-                            <input type="email" class="form-control" id="newEmail" name="newEmail" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Email</button>
-                    </form>
-                </div>
+        <!-- Change Profile Picture Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Change Profile Picture</h5>
+                <form action="/profile/settings/updatePicture" method="POST">
+                    <div class="mb-3">
+                        <label for="profilePicture" class="form-label">New Profile Picture</label>
+                        <input type="url" class="form-control" id="profilePicUrl" name="profilePicUrl" placeholder="https://example.com/photo.jpg" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile Picture</button>
+                </form>
             </div>
+        </div>
 
-            <!-- Change Profile Picture Form -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Change Profile Picture</h5>
-                    <form action="/profile/settings/updatePicture" method="POST">
-                        <div class="mb-3">
-                            <label for="profilePicture" class="form-label">New Profile Picture</label>
-                            <input type="url" class="form-control" id="profilePicUrl" name="profilePicUrl"
-                                placeholder="https://example.com/photo.jpg" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Profile Picture</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Delete Account -->
-            <div class="card mb-4 border-danger">
+        <!-- Delete Account -->
+        <div class="card mb-4 border-danger">
                 <div class="card-body">
                     <h5 class="card-title text-danger">Danger Zone</h5>
                     <p class="card-text">
-                        Permanently delete your account. **This action is irreversible.** All your data, posts, and
-                        friendships will be lost.
+                        Permanently delete your account. **This action is irreversible.** All your data, posts, and friendships will be lost.
                     </p>
-                    <form action="/profile/settings/deleteAccount" method="POST"
-                        onsubmit="return confirm('Are you absolutely sure you want to delete your account? This cannot be undone.');">
+                    <form action="/profile/settings/deleteAccount" method="POST" onsubmit="return confirm('Are you absolutely sure you want to delete your account? This cannot be undone.');">
                         <button type="submit" class="btn btn-danger">Delete Account</button>
                     </form>
                 </div>
             </div>
 
-        </div>
     </div>
+</div>
