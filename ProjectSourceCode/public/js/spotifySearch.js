@@ -43,11 +43,26 @@ async function fetchResults(query, append = false) {
     items.forEach(item => {
       let name = item.name;
       if (item.type === 'track') name += ` - ${item.artists[0].name}`;
+
+      // Get image
+      let imageUrl = '';
+      if (item.album?.images?.length) {
+        imageUrl = item.album.images[0].url;        // tracks
+      } else if (item.images?.length) {
+        imageUrl = item.images[0].url;              // artists/albums
+      }
+
       const li = document.createElement('li');
-      li.className = 'list-group-item list-group-item-action';
-      li.textContent = name;
+      li.className = 'list-group-item list-group-item-action d-flex align-items-center';
+
+      li.innerHTML = `
+        <img src="${imageUrl}" class="result-img">
+        <span>${name}</span>
+      `;
+
       li.addEventListener('click', () => {
         musicInput.value = name;
+
         resultsList.innerHTML = '';
       });
 

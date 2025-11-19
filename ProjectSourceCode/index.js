@@ -15,7 +15,7 @@ async function getSpotifyToken() {
         return spotifyToken;
     }
 
-    const response = await axios.post('https://accounts.spotify.com/api/token', 
+    const response = await axios.post('https://accounts.spotify.com/api/token',
         new URLSearchParams({ grant_type: 'client_credentials' }), {
             headers: {
                 'Authorization': 'Basic ' + Buffer.from(
@@ -522,7 +522,7 @@ app.post('/profile/settings/updatePicture', async(req, res) => {
 });
 
 // POST Delete Account Endpoint
-app.post('/profile/settings/deleteAccount', async (req, res) => {
+app.post('/profile/settings/deleteAccount', async(req, res) => {
     const currentUserId = req.session.user.user_id;
 
     try {
@@ -573,21 +573,20 @@ app.get('/profile/:username', async(req, res) => {
         const currentStatus = await db.oneOrNone(
             `SELECT song_name, note
              FROM current_statuses
-             WHERE user_id = $1`, 
-            [targetUser.user_id]
+             WHERE user_id = $1`, [targetUser.user_id]
         );
 
         // Fetch friend count (count both directions)
         // test to see if commit user changes
         // test commit 0
         const friends = await db.one(
-            `SELECT COUNT(*) AS friend_count
-                FROM friendships
-                WHERE status = 'accepted'
-                AND (user_id = $1 OR friend_id = $1)`,
-            [targetUser.user_id]
-        );  
-        friendCount = friends.friend_count
+            `SELECT COUNT(*) AS friend_count 
+                FROM friendships 
+                WHERE status = 'accepted' AND 
+                (user_id = $1 OR friend_id = $1)`, [targetUser.user_id]
+        );
+        // friendCount = friends.friend_count
+        friendCount = Number(friends.friend_count);
 
         // Fetch posts 
         const posts = await db.any(
@@ -597,17 +596,22 @@ app.get('/profile/:username', async(req, res) => {
                 JOIN users u ON u.user_id = r.user_id
                 WHERE r.user_id = $1
                 ORDER BY r.created_at DESC`, [targetUser.user_id, DEFAULT_PROFILE_PIC]
-            );
+        );
         // Render the page
         res.render('pages/profile', {
-            user: {
+            // Keep logged-in user here so navbar/partials remain correct
+            user: req.session.user,
+
+            // Viewed profile data
+            profileUser: {
                 id: targetUser.user_id,
                 username: targetUser.username,
-                profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
+                // profilePicUrl: targetUser.profile_picture_url || DEFAULT_PROFILE_PIC,
                 // profilePicUrl: targetUser.profile_picture_url,
+                profilePicUrl: targetUser.profile_pic_url,
                 friendCount: friendCount
             },
-            status: currentStatus,
+            // status: currentStatus,
             posts: posts,
             isOwnProfile: isOwnProfile,
             title: `${targetUser.username}'s Profile`
@@ -624,21 +628,21 @@ app.get('/profile/:username', async(req, res) => {
 
 // GET Create New Status Form
 app.get('/profile/status/create', (req, res) => {
-    res.render('pages/create-status', { 
+    res.render('pages/create-status', {
         user: req.session.user,
-        message: null 
+        message: null
     });
 });
 
 // POST Create New Status (Listening To + Optional Note)
-app.post('/profile/status', async (req, res) => {
+app.post('/profile/status', async(req, res) => {
 
     // TO DO: songName is currently a temporary variable from the form in create-status.hbs
-        // if external API integration is successful, then this will allow a user to search an existing song from external db
-        // otherwise, just allow a user to put any song here, basically an empty text box (if external api is not successful)
-        // the current logic is only DATA VALIDATION, NOT the business logic; 
-        // an actual, verifiable song has not been implemented
-    const { songName, note } = req.body; 
+    // if external API integration is successful, then this will allow a user to search an existing song from external db
+    // otherwise, just allow a user to put any song here, basically an empty text box (if external api is not successful)
+    // the current logic is only DATA VALIDATION, NOT the business logic; 
+    // an actual, verifiable song has not been implemented
+    const { songName, note } = req.body;
     const userId = req.session.user.user_id;
 
     // Validation: a song must be chosen 
@@ -667,7 +671,7 @@ app.post('/profile/status', async (req, res) => {
                 updated_at = CURRENT_TIMESTAMP`, // Update timestamp on conflict
             [userId, songName.trim(), statusNote]
         );
-        
+
         console.log(`User ${userId} successfully set status: Listening to "${songName}"`);
 
         res.redirect(`/profile/${req.session.user.username}`);
@@ -738,26 +742,26 @@ app.post('/post-review', async(req, res) => {
 });
 
 // Spotify Search API Endpoint
-app.get('/spotify-search', async (req, res) => {
-  const { q, type = 'track,artist,album', offset = 0 } = req.query;
-  if (!q) return res.status(400).send('Missing query');
+app.get('/spotify-search', async(req, res) => {
+    const { q, type = 'track,artist,album', offset = 0 } = req.query;
+    if (!q) return res.status(400).send('Missing query');
 
-  try {
-    const token = await getSpotifyToken();
-    const response = await axios.get('https://api.spotify.com/v1/search', {
-      headers: { Authorization: `Bearer ${token}` },
-      params: { q, type, limit: 10, offset: parseInt(offset) }
-    });
+    try {
+        const token = await getSpotifyToken();
+        const response = await axios.get('https://api.spotify.com/v1/search', {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { q, type, limit: 10, offset: parseInt(offset) }
+        });
 
-    res.json(response.data);
-  } catch (error) {
-    console.error('Spotify search failed:', error.message);
-    res.status(500).send('Spotify API error');
-  }
+        res.json(response.data);
+    } catch (error) {
+        console.error('Spotify search failed:', error.message);
+        res.status(500).send('Spotify API error');
+    }
 });
 
 app.post('/editPost', async(req, res) => {
-    const {review_id, rating, content} = req.body;
+    const { review_id, rating, content } = req.body;
     const user_id = req.session.user.user_id;
     const username = req.session.user.username
     try {
@@ -778,7 +782,7 @@ app.post('/editPost', async(req, res) => {
 });
 
 app.post('/deletePost', async(req, res) => {
-    const {review_id} = req.body;
+    const { review_id } = req.body;
     const user_id = req.session.user.user_id;
     const username = req.session.user.username
     try {
@@ -789,10 +793,131 @@ app.post('/deletePost', async(req, res) => {
         );
         res.redirect(`/profile/${username}`);
 
-    } catch(error) {
+    } catch (error) {
         console.error(error);
         res.status(500).send('Could not delete post');
     }
+});
+
+/* COMMENT ENDPOINTS */
+
+// GET comments for a specific review
+app.get('/get-comments/:reviewId', async(req, res) => {
+    const { reviewId } = req.params;
+
+    try {
+        const comments = await db.any(`
+      SELECT c.comment_id, c.content, c.created_at,
+             u.username, COALESCE(u.profile_picture_url, $1) AS profile_picture_url
+      FROM comments c
+      JOIN users u ON c.user_id = u.user_id
+      WHERE c.review_id = $2
+      ORDER BY c.created_at ASC
+    `, [DEFAULT_PROFILE_PIC, reviewId]);
+
+        res.json(comments);
+    } catch (error) {
+        console.error('Error fetching comments:', error.message);
+        res.status(500).json({ error: 'Failed to load comments.' });
+    }
+});
+
+// POST a new comment
+app.post('/add-comment', async(req, res) => {
+    const { review_id, content } = req.body;
+    const user_id = req.session.user.user_id;
+
+    if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Comment cannot be empty.' });
+    }
+
+    try {
+        await db.none(
+            `INSERT INTO comments (review_id, user_id, content)
+       VALUES ($1, $2, $3)`, [review_id, user_id, content.trim()]
+        );
+
+        res.json({ success: true, message: 'Comment added successfully!' });
+    } catch (error) {
+        console.error('Error adding comment:', error.message);
+        res.status(500).json({ error: 'Failed to add comment.' });
+    }
+});
+
+// POST react to review
+app.post('/react-review', async(req, res) => {
+    const { review_id, type } = req.body;
+    const user_id = req.session.user.user_id;
+    if (!['like', 'dislike'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+
+    try {
+        const existing = await db.oneOrNone(
+            `SELECT reaction_id,type FROM review_reactions WHERE review_id=$1 AND user_id=$2`, [review_id, user_id]
+        );
+        if (existing) {
+            if (existing.type === type) {
+                await db.none(`DELETE FROM review_reactions WHERE reaction_id=$1`, [existing.reaction_id]);
+            } else {
+                await db.none(`UPDATE review_reactions SET type=$1 WHERE reaction_id=$2`, [type, existing.reaction_id]);
+            }
+        } else {
+            await db.none(`INSERT INTO review_reactions(review_id,user_id,type) VALUES($1,$2,$3)`, [review_id, user_id, type]);
+        }
+        res.json({ success: true });
+    } catch (err) { console.error(err);
+        res.status(500).json({ error: 'Failed to react' }) }
+});
+
+// GET review reaction counts
+app.get('/get-review-reactions/:reviewId', async(req, res) => {
+    const { reviewId } = req.params;
+    try {
+        const counts = await db.one(`
+      SELECT COUNT(*) FILTER (WHERE type='like') AS likes,
+             COUNT(*) FILTER (WHERE type='dislike') AS dislikes
+      FROM review_reactions
+      WHERE review_id=$1`, [reviewId]);
+        res.json(counts);
+    } catch (err) { console.error(err);
+        res.status(500).json({ likes: 0, dislikes: 0 }); }
+});
+
+// POST react to comment
+app.post('/react-comment', async(req, res) => {
+    const { comment_id, type } = req.body;
+    const user_id = req.session.user.user_id;
+    if (!['like', 'dislike'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+
+    try {
+        const existing = await db.oneOrNone(
+            `SELECT reaction_id,type FROM comment_reactions WHERE comment_id=$1 AND user_id=$2`, [comment_id, user_id]
+        );
+        if (existing) {
+            if (existing.type === type) {
+                await db.none(`DELETE FROM comment_reactions WHERE reaction_id=$1`, [existing.reaction_id]);
+            } else {
+                await db.none(`UPDATE comment_reactions SET type=$1 WHERE reaction_id=$2`, [type, existing.reaction_id]);
+            }
+        } else {
+            await db.none(`INSERT INTO comment_reactions(comment_id,user_id,type) VALUES($1,$2,$3)`, [comment_id, user_id, type]);
+        }
+        res.json({ success: true });
+    } catch (err) { console.error(err);
+        res.status(500).json({ error: 'Failed to react' }) }
+});
+
+// GET comment reaction counts
+app.get('/get-comment-reactions/:commentId', async(req, res) => {
+    const { commentId } = req.params;
+    try {
+        const counts = await db.one(`
+      SELECT COUNT(*) FILTER (WHERE type='like') AS likes,
+             COUNT(*) FILTER (WHERE type='dislike') AS dislikes
+      FROM comment_reactions
+      WHERE comment_id=$1`, [commentId]);
+        res.json(counts);
+    } catch (err) { console.error(err);
+        res.status(500).json({ likes: 0, dislikes: 0 }); }
 });
 
 // Port listener
