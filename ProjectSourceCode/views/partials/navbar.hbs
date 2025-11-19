@@ -28,6 +28,12 @@
 
         <!-- Right side -->
         <ul class="navbar-nav">
+          <!-- Dark Mode -->
+          <li class="nav-item me-3">
+            <a class="nav-link" href="#" id="darkModeLink">Dark Mode</a>
+          </li>
+
+
           {{#if user}}
             <li class="nav-item me-3">
               <a class="nav-link" href="/profile/{{user.username}}">{{user.username}}</a>
