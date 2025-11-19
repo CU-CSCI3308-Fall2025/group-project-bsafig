@@ -140,7 +140,7 @@ app.post('/register', async(req, res) => {
             'INSERT INTO users(username, email, password_hash) VALUES($1, $2, $3)', [username, email, hash]
         );
 
-        return res.render('pages/login', { message: 'Registration successful! Please log in.' });
+        return res.render('pages/login', { message: 'Registration successful! Please log in.' , layout: false});
 
     } catch (error) {
         console.error('Registration error:', error.message);
