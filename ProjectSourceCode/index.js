@@ -642,11 +642,13 @@ app.post('/profile/status', async (req, res) => {
     const userId = req.session.user.user_id;
 
     // Validation: a song must be chosen 
-    if (!songName || songName.trim() === '') {
+    if (typeof songName !== 'string' || songName.trim() === '') {
         return res.render('pages/create-status', {
             user: req.session.user,
             message: 'A song is required to set your status.',
-            error: true
+            error: true,
+            // 🚨 ADDED: Pass the note back to the template
+            currentNote: note
         });
     }
 

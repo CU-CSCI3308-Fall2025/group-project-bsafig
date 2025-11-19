@@ -9,22 +9,24 @@
 <form action="/profile/status" method="POST">
   <div class="mb-3">
     <label for="songName" class="form-label">Listening To (Required)</label>
-    <input type="text" class="form-control" id="songName" name="songName" required autocomplete="off" placeholder="Search for a song, album, or artist on Spotify">
+    <input type="text" class="form-control" id="songName" name="songSearch" autocomplete="off" placeholder="Search for a song, album, or artist on Spotify">
     <div class="form-text">
-      Enter the song you're currently listening to. 
+      Enter the song you're currently listening to. The song must be selected from the dropdown as a Spotify song.
     </div>
-      <ul id="spotifyResultsStatus" class="list-group position-absolute w-100"></ul>
+    <ul id="spotifyResults" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></ul>
   </div>
   
+  <input type="hidden" id="verifiedSelection" name="songName" required>
+
   <div class="mb-3">
     <label for="note" class="form-label">Note (Optional)</label>
-    <input type="text" class="form-control" id="note" name="note" maxlength="100">
+    <input type="text" class="form-control" id="note" name="note" maxlength="100" value="{{currentNote}}">
     <div class="form-text">
       Add a quick note about your mood or the song. Max 100 characters.
     </div>
   </div>
   
-  <button type="submit" class="btn btn-primary">Set Status</button>
+  <button type="submit" class="btn btn-primary" id="submitStatusButton" disabled>Set Status</button>
   <a href="/profile/{{user.username}}" class="btn btn-secondary">Cancel</a>
 </form>
 
