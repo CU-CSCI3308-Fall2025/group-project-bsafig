@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="h-100">
 <head>
+  
   <meta charset="UTF-8" />
   <meta
     name="viewport"
@@ -14,31 +15,97 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
   <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
 
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  body.dark-mode {
-    background-color: #000;
-  }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
 
-  main.container {
-    flex: 1 0 auto; 
-    padding-bottom: 80px; /* space for footer */
-  }
+    main.container {
+      flex: 1 0 auto; 
+      padding-bottom: 80px; /* space for footer */
+    }
 
-  footer.footer {
-    flex-shrink: 0; 
-  }
-</style>
+    footer.footer {
+      flex-shrink: 0; 
+    }
+
+    body.dark-mode {
+      background-color: #121212 !important;
+      color: #e5e5e5 !important;
+    }
+
+    body.dark-mode .navbar {
+      background-color: #1f1f1f !important;
+      border-color: #333 !important;
+    }
+
+    body.dark-mode .navbar .nav-link {
+      color: #e5e5e5 !important;
+    }
+
+    body.dark-mode .navbar .nav-link:hover {
+      color: #fff !important;
+    }
+
+    body.dark-mode .navbar-brand {
+      color: #fff !important;
+    }
+
+    body.dark-mode .bg-light,
+    body.dark-mode .card,
+    body.dark-mode .form-control,
+    body.dark-mode .list-group-item,
+    body.dark-mode .dropdown-menu {
+      background-color: #1e1e1e !important;
+      color: #e5e5e5 !important;
+      border-color: #333 !important;
+    }
+
+    body.dark-mode .text-muted {
+      color: #ccc !important;
+    }
+
+    body.dark-mode input,
+    body.dark-mode textarea {
+      background-color: #1e1e1e !important;
+      color: #fff !important;
+    }
+
+    body.dark-mode #spotifyResults {
+      background-color: #1e1e1e !important;
+      color: #e5e5e5 !important;
+      border-color: #444 !important;
+    }
+
+    body.dark-mode #spotifyResults .list-group-item:hover {
+      background-color: #333 !important;
+    }
+
+    body.dark-mode ::placeholder {
+      color: #aaa !important; 
+      opacity: 1; 
+    }
+
+    body.dark-mode .reaction-btn,
+    body.dark-mode .comment-reaction-btn {
+      background: transparent !important;
+      color: #e5e5e5 !important;   
+      border: 1px solid #e5e5e5 !important; 
+    }
+
+    body.dark-mode .reaction-btn:hover,
+    body.dark-mode .comment-reaction-btn:hover {
+      background: rgba(255, 255, 255, 0.1) !important; 
+      color: #e5e5e5 !important;
+    }
+  </style>
 
 </head>
 <body class="h-100 d-flex flex-column">
