@@ -1,0 +1,26 @@
+11/19/25 Meeting 4 Notes
+
+Intro:
+- did demo
+- went to project board
+- what still needs to be worked on? overall pretty done, add album images in post directly
+
+What we did this week:
+Mason: visual changes like removing create post button on login/register button, add update email feature
+Ben: added comments, likes/dislikes for comments and posts
+George: fixes with friends list display, first ver of dark mode
+Cara: readme, changed create post button to an add icon, made footer clear, added images of albums, while searching for songs, made dark mode work
+James: search validation for both status and post, delete status
+
+TODO next week:
+Mason: updating pfp is only a link, so looking to be able to upload actual picture, adding pictures to posts
+Ben: adding tab on feed to switch between recent posts and just your friends have posted
+George: add album cover to posts, open to other work that needs to be done.
+Cara: add images to posts, bug fixes, make front end look good
+James: readme, tackling optional icebox features?
+
+Final:
+- can work over break, but can't force others to work
+- project board: all moved to done or add note on ticket that it was a ticket that we ended up not doing bc it wasn't apart of MVP.
+- individual evaulations: going through commits
+- UAT plans? ask tomorrow
