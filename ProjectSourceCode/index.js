@@ -50,7 +50,7 @@ app.use(session({
 
 // Database configuration
 const dbConfig = {
-    host: process.env.HOST,
+    host: dpg-d4fq1cngi27c73b1p720-a,
     port: 5432,
     database: process.env.POSTGRES_DB,
     user: process.env.POSTGRES_USER,
