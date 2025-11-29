@@ -1,7 +1,7 @@
 # Spotigang Music Social Feed
 
 ## Application Description
-A music social feed application.
+A music social feed application using the Spotify API to search for existing songs.
 
 ## Contributers
 - Ben Safigan
@@ -11,10 +11,23 @@ A music social feed application.
 - Mason Chansamone
 
 ## Technology Stack
-Node.js, Docker, Spotify API, Handlebars, PostgreSQL
+- Node.js
+- Express
+- Docker
+- Axios (Spotify API)
+- Handlebars
+- PostgreSQL
+
+## Prerequisites
+- Docker Desktop (Mac/Windows) >v28 / Docker Engine (Linux)
+- The following will be automatically pulled by the Docker setup when running locally:
+    - Node.js (v24.11.1 or LTS)
+    - PostgreSQL Database Server v14
 
 ## How to run application locally
-Add the following .env file to the ProjectSourceCode folder:
+- git clone the repository
+- cd ./ProjectSourceCode
+- Add the following .env file to the /ProjectSourceCode directory:
 ```
     # database credentials
     POSTGRES_USER="postgres"
@@ -27,11 +40,11 @@ Add the following .env file to the ProjectSourceCode folder:
 ```
 
 
-In the ProjectSourceCode directory, run:
+In the /ProjectSourceCode directory, run:
 ```
     docker compose up
 ```
-It should show up at localhost:3000.  
+The application should show up at localhost:3000.  
 
 ## How to run tests
 In the docker-compose.yaml file, make sure you change npm start to npm run testandrun (it is also written in a comment).  
@@ -41,4 +54,4 @@ Then, run:
 ```
 
 ## Deployed Application
-Here's the link to the deployed application:
+The deployed application can be found at https://spotigang.onrender.com/
