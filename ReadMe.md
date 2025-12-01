@@ -25,7 +25,53 @@ A music social feed application using the Spotify API to search for existing son
     - The `init_data` directory defines all of the necessary PostgreSQL tables for the application inside `create.sql`. 
     - The `public` directory contains helper functions and images, such as the default profile picture of a user and the Spotify Search capability.
     - The `test` directory contains the JavaScript to run unit tests with Mocha and Chai, usable by modifying the `docker-compose.yaml` file.
-    - The `views` directory contains all of the Handlebars used to dynamically render the Spotigang website, including core `pages` and necessary `partials`. 
+    - The `views` directory contains all of the Handlebars used to dynamically render the Spotigang website, including core `pages` and necessary `partials`.
+```
+├─<ProjectRepository>/
+│  ├─ TeamMeetingLogs
+│  ├─ MilestoneSubmissions
+│  ├─ Readme.md
+|  ├─ ProjectSourceCode
+
+├─ ProjectSourceCode
+|   ├─ docker-compose.yaml
+|   ├─ index.js
+|   ├─ .gitignore
+|   ├─ node_modules
+|   ├─ package.json
+|   ├─ views
+|      ├─ pages
+|          ├─ home.hbs
+|          ├─ create-status.hbs
+|          ├─ friends.hbs
+|          ├─ logout.hbs
+|          ├─ postbox.hbs
+|          ├─ profile.hbs
+|          ├─ settings.hbs 
+|          ├─ login.hbs
+|          ├─ register.hbs
+|      ├─ partials
+|          ├─ head.hbs
+|          ├─ message.hbs
+|          ├─ navbar.hbs
+|          ├─ title.hbs
+|          ├─ footer.hbs
+|      ├─ layouts
+|          ├─ main.hbs
+|   ├─ public
+|      ├─ css
+|          ├─ style.css
+|      ├─ js
+|          ├─ darkModeToggle.js
+|          ├─ spotifySearch.js
+|          ├─ spotifySearchStatus.js
+|      ├─ images
+|          ├─ default-profile.png
+|   ├─ init_data
+|      ├─ create.sql
+|   ├─ test
+|      ├─ server.spec.js
+```
 
 ## Prerequisites
 - Docker Desktop (Mac/Windows) >v28 / Docker Engine (Linux)
